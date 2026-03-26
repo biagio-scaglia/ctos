@@ -10,7 +10,6 @@ import '../../providers/timeline_provider.dart';
 import '../../widgets/charts/risk_gauge.dart';
 import '../../widgets/common/glitch_text.dart';
 import '../../widgets/common/hud_card.dart';
-import '../../widgets/common/animated_counter.dart';
 import '../main_shell.dart';
 import '../../../data/models/device_event.dart';
 

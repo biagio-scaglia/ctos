@@ -86,7 +86,7 @@ class VpnDetectionService {
               : null;
 
           final isDatacenter = serverIp != null &&
-              NetworkClassifier._isDatacenter(serverIp);
+              !NetworkClassifier.isPrivateIp(serverIp);
 
           return VpnStatus(
             state: VpnState.connected,
@@ -110,10 +110,3 @@ class VpnDetectionService {
   }
 }
 
-// Extension to expose private method for use within the service
-extension _NetworkClassifierExt on NetworkClassifier {
-  static bool _isDatacenter(String ip) =>
-      NetworkClassifier.isPrivateIp(ip) == false &&
-      ['13.', '18.', '34.', '35.', '52.', '40.', '20.']
-          .any((prefix) => ip.startsWith(prefix));
-}

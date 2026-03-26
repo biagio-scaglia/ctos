@@ -1,13 +1,9 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/app_info.dart';
-import '../models/app_info.g.dart';
 import '../models/network_connection.dart';
-import '../models/network_connection.g.dart';
 import '../models/device_event.dart';
-import '../models/device_event.g.dart';
 import '../models/app_behavior.dart';
-import '../models/app_behavior.g.dart';
 import '../../core/constants.dart';
 
 class HiveService {
