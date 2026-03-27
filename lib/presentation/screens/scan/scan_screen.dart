@@ -319,9 +319,8 @@ class _AppTile extends StatelessWidget {
               children: [
                 _DetailStat('CPU', '${app.cpuUsage.toStringAsFixed(1)}%'),
                 _DetailStat('RAM', '${app.ramUsageMb.toStringAsFixed(0)}MB'),
-                _DetailStat(
-                    'NET', '${app.networkTrafficMb.toStringAsFixed(0)}MB'),
-                _DetailStat('WAKE', '${app.wakeLocksCount}'),
+                _DetailStat('NET', '${app.networkTrafficMb.toStringAsFixed(0)}MB'),
+                _DetailStat('BATT', '${app.batteryImpact.toStringAsFixed(0)}%'),
               ],
             ),
           ],

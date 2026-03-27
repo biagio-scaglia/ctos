@@ -12,6 +12,7 @@ import '../../widgets/common/glitch_text.dart';
 import '../../widgets/common/hud_card.dart';
 import '../main_shell.dart';
 import '../../../data/models/device_event.dart';
+import '../../../services/device_monitor_service.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -25,6 +26,7 @@ class HomeScreen extends ConsumerWidget {
     final recentEvents = ref.watch(filteredTimelineProvider).take(3).toList();
     final vpn = ref.watch(vpnStatusProvider).valueOrNull;
     final suspiciousConns = ref.watch(suspiciousConnectionsCountProvider);
+    final usageStatsGranted = ref.watch(usageStatsGrantedProvider).valueOrNull ?? true;
 
     return Scaffold(
       backgroundColor: CtosColors.background,
@@ -107,6 +109,38 @@ class HomeScreen extends ConsumerWidget {
             ],
           ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
           const SizedBox(height: 16),
+
+          // ── Usage stats permission banner ──────────────────────────
+          if (!usageStatsGranted)
+            GestureDetector(
+              onTap: () => DeviceMonitorService.openUsageSettings(),
+              child: HudCard(
+                borderColor: CtosColors.amber.withOpacity(0.6),
+                glowColor: CtosColors.amber.withOpacity(0.15),
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline,
+                        color: CtosColors.amber, size: 18),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Text(
+                        'ABILITA "ACCESSO UTILIZZO DATI" PER DATI REALI DI CPU/RETE PER APP',
+                        style: TextStyle(
+                          fontFamily: 'Rajdhani',
+                          fontSize: 12,
+                          color: CtosColors.amber,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right,
+                        color: CtosColors.amber, size: 18),
+                  ],
+                ),
+              ),
+            ).animate().fadeIn(delay: 100.ms),
+          if (!usageStatsGranted) const SizedBox(height: 12),
 
           // ── Alert banner if critical ───────────────────────────────
           if (suspiciousConns > 0)

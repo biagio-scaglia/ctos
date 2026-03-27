@@ -14,8 +14,9 @@ import android.os.Build
 import android.os.Environment
 import android.os.Process
 import android.os.StatFs
+import android.accessibilityservice.AccessibilityServiceInfo
+import android.provider.Settings
 import android.view.accessibility.AccessibilityManager
-import android.view.accessibility.AccessibilityServiceInfo
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -37,11 +38,16 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DEVICE_CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
-                    "getMemoryInfo"         -> result.success(getMemoryInfo())
-                    "getStorageInfo"        -> result.success(getStorageInfo())
-                    "getInstalledApps"      -> result.success(getInstalledAppsInfo())
-                    "getNetworkConnections" -> result.success(getNetworkConnections())
-                    else                    -> result.notImplemented()
+                    "getMemoryInfo"            -> result.success(getMemoryInfo())
+                    "getStorageInfo"           -> result.success(getStorageInfo())
+                    "getInstalledApps"         -> result.success(getInstalledAppsInfo())
+                    "getNetworkConnections"    -> result.success(getNetworkConnections())
+                    "hasUsageStatsPermission"  -> result.success(hasUsageStatsPermission())
+                    "openUsageSettings"        -> {
+                        startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                        result.success(true)
+                    }
+                    else                       -> result.notImplemented()
                 }
             }
 
@@ -341,33 +347,35 @@ class MainActivity : FlutterActivity() {
     }
 
     /** Parse a hex IP string (4 bytes IPv4 or 16 bytes IPv6) from /proc/net/tcp */
-    private fun parseHexIp(hex: String, isV6: Boolean): String? = try {
-        if (isV6) {
-            if (hex.length != 32) return null
-            // 4 groups of 8 hex chars, each group is a 32-bit LE word
-            val words = (0 until 4).map { g ->
-                val word = hex.substring(g * 8, g * 8 + 8).toLong(16)
-                // Reverse bytes within each 32-bit word
-                val b0 = (word shr 24) and 0xFF
-                val b1 = (word shr 16) and 0xFF
-                val b2 = (word shr 8 ) and 0xFF
-                val b3 =  word         and 0xFF
-                (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+    private fun parseHexIp(hex: String, isV6: Boolean): String? {
+        return try {
+            if (isV6) {
+                if (hex.length != 32) return null
+                // 4 groups of 8 hex chars, each group is a 32-bit LE word
+                val words = (0 until 4).map { g ->
+                    val word = hex.substring(g * 8, g * 8 + 8).toLong(16)
+                    // Reverse bytes within each 32-bit word
+                    val b0 = (word shr 24) and 0xFF
+                    val b1 = (word shr 16) and 0xFF
+                    val b2 = (word shr 8 ) and 0xFF
+                    val b3 =  word         and 0xFF
+                    (b3 shl 24) or (b2 shl 16) or (b1 shl 8) or b0
+                }
+                // Format as IPv6 groups of 16 bits each
+                val groups = mutableListOf<String>()
+                for (w in words) {
+                    groups.add(String.format("%x", (w shr 16) and 0xFFFF))
+                    groups.add(String.format("%x",  w         and 0xFFFF))
+                }
+                groups.joinToString(":")
+            } else {
+                if (hex.length != 8) return null
+                val v = hex.toLong(16)
+                // Little-endian: byte0 is least significant
+                "${v and 0xFF}.${(v shr 8) and 0xFF}.${(v shr 16) and 0xFF}.${(v shr 24) and 0xFF}"
             }
-            // Format as IPv6 groups of 16 bits each
-            val groups = mutableListOf<String>()
-            for (w in words) {
-                groups.add(String.format("%x", (w shr 16) and 0xFFFF))
-                groups.add(String.format("%x",  w         and 0xFFFF))
-            }
-            groups.joinToString(":")
-        } else {
-            if (hex.length != 8) return null
-            val v = hex.toLong(16)
-            // Little-endian: byte0 is least significant
-            "${v and 0xFF}.${(v shr 8) and 0xFF}.${(v shr 16) and 0xFF}.${(v shr 24) and 0xFF}"
-        }
-    } catch (e: Exception) { null }
+        } catch (e: Exception) { null }
+    }
 
     // ─── VPN detection ─────────────────────────────────────────────────────────
 

@@ -21,6 +21,12 @@ final cpuUsageProvider = StreamProvider<double>((ref) {
   return DeviceMonitorService.cpuUsageStream();
 });
 
+// ── Usage Stats Permission ────────────────────────────────────────────────────
+
+final usageStatsGrantedProvider = FutureProvider<bool>((ref) async {
+  return DeviceMonitorService.hasUsageStatsPermission();
+});
+
 // ── Installed Apps ────────────────────────────────────────────────────────────
 
 final appsProvider = FutureProvider((ref) async {

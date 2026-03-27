@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:battery_plus/battery_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import '../data/models/app_info.dart';
@@ -222,6 +223,24 @@ class DeviceMonitorService {
 
       return app.copyWith(suspicionScore: SuspicionCalculator.calculate(app));
     }).toList();
+  }
+
+  /// Returns true if the PACKAGE_USAGE_STATS permission is granted.
+  static Future<bool> hasUsageStatsPermission() async {
+    if (kIsWeb) return false;
+    try {
+      return await _channel.invokeMethod<bool>('hasUsageStatsPermission') ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Opens Android Settings → Usage Access so the user can grant the permission.
+  static Future<void> openUsageSettings() async {
+    if (kIsWeb) return;
+    try {
+      await _channel.invokeMethod('openUsageSettings');
+    } catch (_) {}
   }
 
   /// Stream battery level every 30 seconds

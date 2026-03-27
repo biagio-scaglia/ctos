@@ -67,6 +67,14 @@ class AppInfo extends HiveObject {
     required this.isSystemApp,
   });
 
+  /// Estimated battery impact (0–100) derived from CPU, network and wake locks.
+  double get batteryImpact {
+    final cpuScore  = cpuUsage.clamp(0, 100) * 0.5;
+    final netScore  = (networkTrafficMb / 20.0).clamp(0.0, 30.0);
+    final wakeScore = (wakeLocksCount * 5.0).clamp(0.0, 20.0);
+    return (cpuScore + netScore + wakeScore).clamp(0.0, 100.0);
+  }
+
   AppInfo copyWith({
     int? suspicionScore,
     double? cpuUsage,

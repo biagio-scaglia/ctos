@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'app.dart';
 import 'data/local/hive_service.dart';
@@ -28,6 +30,13 @@ void main() async {
   // Init Hive
   await Hive.initFlutter();
   await HiveService.init();
+
+  // Request all runtime permissions in sequence (Android 13+)
+  if (!kIsWeb) {
+    await Permission.notification.request();
+    await Permission.phone.request();
+    await Permission.ignoreBatteryOptimizations.request();
+  }
 
   // Init notifications
   await NotificationService.init();
