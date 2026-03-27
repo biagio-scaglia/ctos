@@ -7,8 +7,10 @@ import '../../providers/device_provider.dart';
 import '../../widgets/charts/radar_painter.dart';
 import '../../widgets/common/hud_card.dart';
 import '../../../core/utils/suspicion_calculator.dart';
+import '../../../core/utils/fake_app_detector.dart';
 import '../../../data/models/app_info.dart';
 import '../../../services/audio_service.dart';
+import '../../widgets/ai_explain_sheet.dart';
 
 class ScanScreen extends ConsumerWidget {
   const ScanScreen({super.key});
@@ -113,11 +115,26 @@ class ScanScreen extends ConsumerWidget {
               data: (apps) {
                 final sorted = [...apps]
                   ..sort((a, b) => b.suspicionScore.compareTo(a.suspicionScore));
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: sorted.length,
-                  itemBuilder: (context, i) =>
-                      _AppTile(app: sorted[i], index: i),
+                final fakeMap = {
+                  for (final m in FakeAppDetector.analyze(apps))
+                    m.app.packageName: m
+                };
+                return Column(
+                  children: [
+                    if (fakeMap.isNotEmpty)
+                      _FakeAppBanner(count: fakeMap.length),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: sorted.length,
+                        itemBuilder: (context, i) => _AppTile(
+                          app: sorted[i],
+                          index: i,
+                          fakeMatch: fakeMap[sorted[i].packageName],
+                        ),
+                      ),
+                    ),
+                  ],
                 );
               },
               loading: () => const Center(
@@ -148,8 +165,9 @@ class ScanScreen extends ConsumerWidget {
 class _AppTile extends StatelessWidget {
   final AppInfo app;
   final int index;
+  final FakeAppMatch? fakeMatch;
 
-  const _AppTile({required this.app, required this.index});
+  const _AppTile({required this.app, required this.index, this.fakeMatch});
 
   @override
   Widget build(BuildContext context) {
@@ -208,6 +226,25 @@ class _AppTile extends StatelessWidget {
                 ],
               ),
             ),
+            if (fakeMatch != null)
+              Container(
+                margin: const EdgeInsets.only(right: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  border: Border.all(color: CtosColors.critical, width: 1),
+                  color: CtosColors.critical.withValues(alpha: 0.15),
+                ),
+                child: const Text(
+                  'FAKE',
+                  style: TextStyle(
+                    fontFamily: 'ShareTechMono',
+                    fontSize: 9,
+                    color: CtosColors.critical,
+                    letterSpacing: 1,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
@@ -245,6 +282,35 @@ class _AppTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Fake app warning
+            if (fakeMatch != null)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: CtosColors.critical),
+                  color: CtosColors.critical.withValues(alpha: 0.08),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded,
+                        color: CtosColors.critical, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'POTENZIALE FAKE — imita ${fakeMatch!.impersonating} '
+                        '(distanza: ${fakeMatch!.editDistance}, ${fakeMatch!.confidence})',
+                        style: const TextStyle(
+                          fontFamily: 'ShareTechMono',
+                          fontSize: 10,
+                          color: CtosColors.critical,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             Row(
               children: [
                 Expanded(
@@ -312,6 +378,44 @@ class _AppTile extends StatelessWidget {
                       fontFamily: 'Rajdhani',
                       fontSize: 13,
                       color: CtosColors.safe)),
+            const SizedBox(height: 14),
+            // AI Explain button
+            GestureDetector(
+              onTap: () {
+                Navigator.pop(ctx);
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  builder: (_) => AiExplainSheet.app(app: app),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: CtosColors.cyan),
+                  color: CtosColors.cyan.withValues(alpha: 0.07),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.psychology_outlined,
+                        color: CtosColors.cyan, size: 16),
+                    SizedBox(width: 8),
+                    Text(
+                      'CHIEDI AL GUARDIAN AI',
+                      style: TextStyle(
+                        fontFamily: 'Orbitron',
+                        fontSize: 11,
+                        color: CtosColors.cyan,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
             const SizedBox(height: 12),
             // Stats row
             Row(
@@ -324,6 +428,41 @@ class _AppTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _FakeAppBanner extends StatelessWidget {
+  final int count;
+  const _FakeAppBanner({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        border: Border.all(color: CtosColors.critical),
+        color: CtosColors.critical.withValues(alpha: 0.07),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.warning_amber_rounded,
+              color: CtosColors.critical, size: 16),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '$count app sospett${count == 1 ? 'a' : 'e'} — possibile typosquatting rilevato',
+              style: const TextStyle(
+                fontFamily: 'ShareTechMono',
+                fontSize: 10,
+                color: CtosColors.critical,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
