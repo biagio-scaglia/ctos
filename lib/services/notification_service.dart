@@ -1,40 +1,62 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 
-/// Simple in-app notification service (no external plugin dependency for demo).
-/// In production, use flutter_local_notifications.
+const _guardianChannel = MethodChannel('com.ctos.companion/guardian');
+
+/// In-app notification queue + real Android push notifications via
+/// CtosProtectionService (on Android only, silent on web/other platforms).
 class NotificationService {
   static final _notifications = <CtosNotification>[];
   static final List<VoidCallback> _listeners = [];
 
+  /// Called once at app startup. Starts the foreground protection service.
   static Future<void> init() async {
-    // In production: initialize flutter_local_notifications here
+    if (!kIsWeb) {
+      try {
+        await _guardianChannel.invokeMethod('startProtection');
+      } catch (_) {}
+    }
   }
 
   static void addListener(VoidCallback listener) => _listeners.add(listener);
-  static void removeListener(VoidCallback listener) => _listeners.remove(listener);
+  static void removeListener(VoidCallback listener) =>
+      _listeners.remove(listener);
 
   static List<CtosNotification> get all => List.unmodifiable(_notifications);
   static int get unreadCount => _notifications.where((n) => !n.read).length;
 
+  /// Push a notification both in-app and as a real Android system notification.
   static void push({
     required String title,
     required String body,
     NotificationSeverity severity = NotificationSeverity.info,
   }) {
-    _notifications.insert(0, CtosNotification(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      body: body,
-      severity: severity,
-      timestamp: DateTime.now(),
-    ));
-
-    // Keep max 50
+    // In-app queue
+    _notifications.insert(
+        0,
+        CtosNotification(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          title: title,
+          body: body,
+          severity: severity,
+          timestamp: DateTime.now(),
+        ));
     if (_notifications.length > 50) _notifications.removeLast();
+    for (final l in _listeners) l();
 
-    for (final l in _listeners) {
-      l();
+    // Real Android notification (non-blocking)
+    if (!kIsWeb) {
+      final level = switch (severity) {
+        NotificationSeverity.critical => 5,
+        NotificationSeverity.warning  => 3,
+        NotificationSeverity.info     => 1,
+      };
+      _guardianChannel.invokeMethod('showAlert', {
+        'title': title,
+        'body': body,
+        'level': level,
+      }).ignore();
     }
   }
 

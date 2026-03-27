@@ -26,14 +26,37 @@ class _GuardianScreenState extends ConsumerState<GuardianScreen> {
   bool _checking = false;
   final List<GuardianAdvice> _adviceLog = [];
 
+  static const _guardianChannel = MethodChannel('com.ctos.companion/guardian');
+
   @override
   void initState() {
     super.initState();
     SecurityGuardianService.adviceStream.listen((advice) {
-      if (mounted) {
-        setState(() => _adviceLog.insert(0, advice));
+      if (mounted) setState(() => _adviceLog.insert(0, advice));
+    });
+    // Listen for URLs shared from Chrome / other browsers
+    _guardianChannel.setMethodCallHandler((call) async {
+      if (call.method == 'onSharedUrl' && mounted) {
+        final url = call.arguments as String?;
+        if (url != null && url.isNotEmpty) {
+          _urlController.text = url;
+          _checkUrl();
+        }
       }
     });
+    // Also check if a URL was shared before this screen was open
+    _checkPendingSharedUrl();
+  }
+
+  Future<void> _checkPendingSharedUrl() async {
+    try {
+      final url =
+          await _guardianChannel.invokeMethod<String?>('getSharedUrl');
+      if (url != null && url.isNotEmpty && mounted) {
+        _urlController.text = url;
+        _checkUrl();
+      }
+    } catch (_) {}
   }
 
   @override

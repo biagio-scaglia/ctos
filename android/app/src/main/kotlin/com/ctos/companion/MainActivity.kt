@@ -23,8 +23,13 @@ import java.io.File
 
 class MainActivity : FlutterActivity() {
 
-    private val DEVICE_CHANNEL = "com.ctos.companion/device"
-    private val VPN_CHANNEL    = "com.ctos.companion/vpn"
+    private val DEVICE_CHANNEL   = "com.ctos.companion/device"
+    private val VPN_CHANNEL      = "com.ctos.companion/vpn"
+    private val GUARDIAN_CHANNEL = "com.ctos.companion/guardian"
+
+    // Shared URL from external apps (e.g. Chrome → Share → CTOS)
+    private var pendingSharedUrl: String? = null
+    private var guardianChannel: MethodChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -32,11 +37,11 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, DEVICE_CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {
-                    "getMemoryInfo"        -> result.success(getMemoryInfo())
-                    "getStorageInfo"       -> result.success(getStorageInfo())
-                    "getInstalledApps"     -> result.success(getInstalledAppsInfo())
-                    "getNetworkConnections"-> result.success(getNetworkConnections())
-                    else                   -> result.notImplemented()
+                    "getMemoryInfo"         -> result.success(getMemoryInfo())
+                    "getStorageInfo"        -> result.success(getStorageInfo())
+                    "getInstalledApps"      -> result.success(getInstalledAppsInfo())
+                    "getNetworkConnections" -> result.success(getNetworkConnections())
+                    else                    -> result.notImplemented()
                 }
             }
 
@@ -47,6 +52,59 @@ class MainActivity : FlutterActivity() {
                     else       -> result.notImplemented()
                 }
             }
+
+        guardianChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, GUARDIAN_CHANNEL)
+        guardianChannel!!.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "startProtection" -> {
+                    CtosProtectionService.start(this)
+                    result.success(true)
+                }
+                "stopProtection" -> {
+                    CtosProtectionService.stop(this)
+                    result.success(true)
+                }
+                "showAlert" -> {
+                    val title = call.argument<String>("title") ?: "CTOS Alert"
+                    val body  = call.argument<String>("body")  ?: ""
+                    val level = call.argument<Int>("level")    ?: 3
+                    CtosProtectionService.showAlert(this, title, body, level)
+                    result.success(true)
+                }
+                "getSharedUrl" -> {
+                    result.success(pendingSharedUrl)
+                    pendingSharedUrl = null
+                }
+                else -> result.notImplemented()
+            }
+        }
+
+        // Start protection service immediately when Flutter engine is ready
+        CtosProtectionService.start(this)
+
+        // Deliver any URL that was shared to CTOS before the engine was ready
+        extractSharedUrl(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        extractSharedUrl(intent)
+        // Notify Flutter about the new URL
+        pendingSharedUrl?.let { url ->
+            guardianChannel?.invokeMethod("onSharedUrl", url)
+        }
+    }
+
+    private fun extractSharedUrl(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_SEND &&
+            intent.type?.startsWith("text/") == true) {
+            val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
+            // Extract URL from shared text (may contain surrounding context)
+            val urlRegex = Regex("https?://[^\\s]+")
+            val found = urlRegex.find(text)?.value
+            if (found != null) pendingSharedUrl = found
+            else if (text.startsWith("http")) pendingSharedUrl = text.trim()
+        }
     }
 
     // ─── Memory ────────────────────────────────────────────────────────────────
