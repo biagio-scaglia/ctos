@@ -10,8 +10,8 @@ import '../core/utils/suspicion_calculator.dart';
 /// - Emulator  → http://10.0.2.2:11434
 /// - Real device on same WiFi → http://<PC_LOCAL_IP>:11434
 ///   (start Ollama with: OLLAMA_HOST=0.0.0.0 ollama serve)
-const ollamaBaseUrl = 'http://10.0.2.2:11434';
-const ollamaModel = 'gpt120oss';
+const ollamaBaseUrl = 'http://192.168.1.12:11434';
+const ollamaModel = 'gpt-oss:120b-cloud';
 
 class OllamaService {
   static final _client = http.Client();
