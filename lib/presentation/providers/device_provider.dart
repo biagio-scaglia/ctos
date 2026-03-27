@@ -1,7 +1,12 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/device_monitor_service.dart';
+import '../../services/security_guardian_service.dart';
 import '../../data/local/hive_service.dart';
+import 'network_provider.dart';
+import 'risk_provider.dart';
 
 // ── Device Info ──────────────────────────────────────────────────────────────
 
@@ -88,6 +93,29 @@ class ScanNotifier extends StateNotifier<ScanState> {
 
     state = state.copyWith(isScanning: false, progress: 1.0);
     _ref.invalidate(appsProvider);
+
+    // Start (or keep alive) the real-time guardian now that we have fresh data
+    SecurityGuardianService.start(
+      getApps: () => _ref.read(appsProvider).valueOrNull ?? [],
+      getConnections: () => _ref.read(connectionsProvider).valueOrNull ?? [],
+    );
+
+    // Update widget with latest risk data
+    _updateWidget();
+  }
+
+  void _updateWidget() {
+    if (kIsWeb) return;
+    final risk = _ref.read(riskSnapshotProvider);
+    final vpn  = _ref.read(vpnStatusProvider).valueOrNull?.isActive ?? false;
+    final time = '${DateTime.now().hour.toString().padLeft(2, '0')}:'
+                 '${DateTime.now().minute.toString().padLeft(2, '0')}';
+    const channel = MethodChannel('com.ctos.companion/device');
+    channel.invokeMethod('updateWidgetData', {
+      'riskScore': risk.totalScore,
+      'vpnActive': vpn,
+      'lastScan': time,
+    }).ignore();
   }
 }
 

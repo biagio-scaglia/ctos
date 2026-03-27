@@ -47,6 +47,20 @@ class MainActivity : FlutterActivity() {
                         startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                         result.success(true)
                     }
+                    "updateWidgetData"         -> {
+                        val risk = call.argument<Int>("riskScore") ?: 0
+                        val vpn  = call.argument<Boolean>("vpnActive") ?: false
+                        val time = call.argument<String>("lastScan") ?: "--:--"
+                        val prefs = getSharedPreferences(
+                            CtosBackgroundWorker.PREFS_NAME, android.content.Context.MODE_PRIVATE)
+                        prefs.edit()
+                            .putInt(CtosBackgroundWorker.KEY_RISK, risk)
+                            .putBoolean(CtosBackgroundWorker.KEY_VPN, vpn)
+                            .putString(CtosBackgroundWorker.KEY_LAST_SCAN, time)
+                            .apply()
+                        CtosWidget.update(this)
+                        result.success(true)
+                    }
                     else                       -> result.notImplemented()
                 }
             }

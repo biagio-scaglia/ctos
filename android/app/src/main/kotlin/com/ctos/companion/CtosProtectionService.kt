@@ -10,6 +10,10 @@ import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 
 /**
  * Foreground service that keeps CTOS Companion alive in the background,
@@ -65,6 +69,7 @@ class CtosProtectionService : Service() {
         nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         createChannels()
         startForeground(PERSISTENT_NOTIF, buildPersistentNotification())
+        schedulePeriodicScan()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -78,6 +83,16 @@ class CtosProtectionService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    private fun schedulePeriodicScan() {
+        val request = PeriodicWorkRequestBuilder<CtosBackgroundWorker>(6, TimeUnit.HOURS)
+            .build()
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            CtosBackgroundWorker.WORK_NAME,
+            ExistingPeriodicWorkPolicy.KEEP,
+            request
+        )
+    }
 
     // ── Notification channels ──────────────────────────────────────────────────
 

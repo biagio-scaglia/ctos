@@ -80,6 +80,27 @@
                 <data android:scheme="package" />
             </intent-filter>
         </receiver>
+
+        <!-- Home screen widget -->
+        <receiver
+            android:name=".CtosWidget"
+            android:exported="true"
+            android:label="CTOS Security">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_info" />
+        </receiver>
+
+        <!-- WorkManager background worker -->
+        <provider
+            android:name="androidx.work.impl.WorkManagerInitializer"
+            android:authorities="${applicationId}.workmanager-init"
+            android:exported="false"
+            android:multiprocess="true"
+            tools:node="remove" />
     </application>
 
     <!-- Required on Android 11+ to read all installed packages -->

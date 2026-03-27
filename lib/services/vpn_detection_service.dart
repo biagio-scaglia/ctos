@@ -6,20 +6,24 @@ import '../data/models/vpn_status.dart';
 import '../data/models/device_event.dart';
 import '../core/utils/network_classifier.dart';
 import 'event_service.dart';
+import 'notification_service.dart';
 
 const _channel = MethodChannel('com.ctos.companion/vpn');
 
 class VpnDetectionService {
   static VpnStatus _current = VpnStatus.unknown();
   static final _controller = StreamController<VpnStatus>.broadcast();
+  static bool _monitoring = false; // guard against multiple timers
 
   static Stream<VpnStatus> get statusStream => _controller.stream;
   static VpnStatus get current => _current;
 
+  /// Safe to call multiple times — only starts one monitoring loop.
   static Future<void> startMonitoring() async {
-    // Check immediately, then every 10 seconds
+    if (_monitoring) return;
+    _monitoring = true;
     await _check();
-    Timer.periodic(const Duration(seconds: 10), (_) => _check());
+    Timer.periodic(const Duration(seconds: 30), (_) => _check());
   }
 
   static Future<void> _check() async {
@@ -29,13 +33,14 @@ class VpnDetectionService {
     _current = status;
     _controller.add(status);
 
-    // Generate events on state changes
+    // VPN connected
     if (!wasActive && status.isActive) {
       await EventService.addEvent(DeviceEvent(
         id: 'vpn_${DateTime.now().millisecondsSinceEpoch}',
         timestamp: DateTime.now(),
         type: DeviceEventType.vpnDetected,
-        description: 'VPN connection detected on interface ${status.interfaceName ?? 'unknown'}',
+        description: 'VPN connection detected on interface '
+            '${status.interfaceName ?? 'unknown'}',
         severityLevel: 3,
         metadata: {
           if (status.serverIp != null) 'server_ip': status.serverIp!,
@@ -43,7 +48,15 @@ class VpnDetectionService {
           if (status.interfaceName != null) 'interface': status.interfaceName!,
         },
       ));
-    } else if (wasActive && !status.isActive) {
+    }
+
+    // VPN dropped — notify immediately (no cooldown, state-change only)
+    if (wasActive && !status.isActive) {
+      NotificationService.push(
+        title: 'VPN DISCONNESSA',
+        body: 'La protezione VPN è caduta. Il traffico non è più cifrato.',
+        severity: NotificationSeverity.warning,
+      );
       await EventService.addEvent(DeviceEvent(
         id: 'vpn_off_${DateTime.now().millisecondsSinceEpoch}',
         timestamp: DateTime.now(),
@@ -54,7 +67,7 @@ class VpnDetectionService {
     }
   }
 
-  /// Detect VPN using multiple heuristics
+  /// Detect VPN using multiple heuristics.
   static Future<VpnStatus> detect() async {
     // Method 1: ask Android via platform channel
     try {
@@ -71,23 +84,20 @@ class VpnDetectionService {
       }
     } catch (_) {}
 
-    // Method 2: check network interfaces for tun/ppp (Unix)
+    // Method 2: check network interfaces for tun/ppp/wg (Unix)
     try {
       final interfaces = await NetworkInterface.list();
       for (final iface in interfaces) {
         final name = iface.name.toLowerCase();
         if (name.startsWith('tun') ||
             name.startsWith('ppp') ||
-            name.startsWith('wg') ||   // WireGuard
+            name.startsWith('wg') ||
             name.startsWith('vpn')) {
-          // Found a VPN-like interface
           final serverIp = iface.addresses.isNotEmpty
               ? iface.addresses.first.address
               : null;
-
-          final isDatacenter = serverIp != null &&
-              !NetworkClassifier.isPrivateIp(serverIp);
-
+          final isDatacenter =
+              serverIp != null && !NetworkClassifier.isPrivateIp(serverIp);
           return VpnStatus(
             state: VpnState.connected,
             serverIp: serverIp,
@@ -109,4 +119,3 @@ class VpnDetectionService {
     _controller.close();
   }
 }
-

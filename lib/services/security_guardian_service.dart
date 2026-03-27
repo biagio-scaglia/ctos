@@ -7,17 +7,21 @@ import 'notification_service.dart';
 import 'audio_service.dart';
 
 /// The Security Guardian monitors in real time and proactively alerts the user.
-/// It acts as the "always-on" protection layer.
+/// Each alert type has a 4-hour cooldown to avoid notification spam.
 class SecurityGuardianService {
   static Timer? _timer;
   static bool _active = false;
+
+  // Cooldown: don't re-fire the same alert type within this duration
+  static const _cooldown = Duration(hours: 4);
+  static final _lastFired = <GuardianAdviceType, DateTime>{};
 
   static bool get isActive => _active;
 
   static final _adviceController = StreamController<GuardianAdvice>.broadcast();
   static Stream<GuardianAdvice> get adviceStream => _adviceController.stream;
 
-  /// Start monitoring — call once after first scan
+  /// Start monitoring — safe to call multiple times (idempotent).
   static void start({
     required List<AppInfo> Function() getApps,
     required List<NetworkConnection> Function() getConnections,
@@ -25,7 +29,7 @@ class SecurityGuardianService {
     if (_active) return;
     _active = true;
 
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) async {
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) async {
       await _runChecks(getApps(), getConnections());
     });
   }
@@ -37,16 +41,15 @@ class SecurityGuardianService {
     // ── Check 1: Critical suspicion score ─────────────────────────
     for (final app in apps) {
       if (app.suspicionScore >= 80) {
-        final advice = GuardianAdvice(
+        _emit(GuardianAdvice(
           type: GuardianAdviceType.criticalApp,
           title: 'HIGH RISK APP DETECTED',
-          message: '${app.displayName} has a critical suspicion score of ${app.suspicionScore}. '
-              'Consider uninstalling or revoking its permissions.',
+          message: '${app.displayName} has a critical suspicion score of '
+              '${app.suspicionScore}. Consider uninstalling or revoking permissions.',
           severity: 5,
           relatedApp: app.displayName,
           actionLabel: 'VIEW IN THREATS',
-        );
-        _emit(advice);
+        ));
         break; // one at a time
       }
     }
@@ -57,14 +60,14 @@ class SecurityGuardianService {
       _emit(GuardianAdvice(
         type: GuardianAdviceType.accessibilityWarning,
         title: 'MULTIPLE ACCESSIBILITY SERVICES',
-        message: '${accessibilityApps.length} apps have Accessibility access enabled. '
+        message: '${accessibilityApps.length} apps have Accessibility access. '
             'This can allow them to read your screen and intercept inputs.',
         severity: 4,
         actionLabel: 'VIEW PERMISSIONS',
       ));
     }
 
-    // ── Check 3: Unusual connections ──────────────────────────────
+    // ── Check 3: Suspicious / Tor connections ─────────────────────
     final suspicious = connections.where((c) => c.suspicionScore > 70).toList();
     if (suspicious.isNotEmpty) {
       final c = suspicious.first;
@@ -73,20 +76,22 @@ class SecurityGuardianService {
         title: 'SUSPICIOUS CONNECTION',
         message: 'Active connection to ${c.remoteIp}:${c.port} '
             '${c.flags.isNotEmpty ? "(${c.flags.join(', ')})" : ""} '
-            'with suspicion score ${c.suspicionScore}.',
+            'score ${c.suspicionScore}.',
         severity: 3,
         actionLabel: 'VIEW NETWORK',
       ));
     }
 
-    // ── Check 4: Apps auto-starting on boot ───────────────────────
-    final bootApps = apps.where((a) => a.startsOnBoot && a.suspicionScore > 30).toList();
+    // ── Check 4: Apps auto-starting on boot with risk ─────────────
+    final bootApps = apps
+        .where((a) => a.startsOnBoot && a.suspicionScore > 30)
+        .toList();
     if (bootApps.isNotEmpty) {
       _emit(GuardianAdvice(
         type: GuardianAdviceType.autoStartWarning,
         title: 'AUTO-START APPS DETECTED',
         message: '${bootApps.map((a) => a.displayName).take(3).join(', ')} '
-            'start automatically on boot and have elevated risk scores.',
+            'start on boot and have elevated risk scores.',
         severity: 3,
         actionLabel: 'VIEW THREATS',
       ));
@@ -94,6 +99,11 @@ class SecurityGuardianService {
   }
 
   static void _emit(GuardianAdvice advice) {
+    // Cooldown check — skip if this type was fired recently
+    final last = _lastFired[advice.type];
+    if (last != null && DateTime.now().difference(last) < _cooldown) return;
+    _lastFired[advice.type] = DateTime.now();
+
     _adviceController.add(advice);
 
     NotificationService.push(
