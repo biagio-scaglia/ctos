@@ -216,34 +216,28 @@ class RiskDashboardScreen extends ConsumerWidget {
   ) {
     final recs = <_Recommendation>[];
 
-    if (snap.totalScore > 60) {
+    if (snap.totalScore >= 75) {
+      recs.add(_Recommendation(
+        icon: Icons.warning_amber_outlined,
+        title: 'Critical threat level',
+        body: 'Immediate action required. Visit Threat Center and remove suspicious apps.',
+        color: CtosColors.critical,
+      ));
+    } else if (snap.totalScore >= 50) {
       recs.add(_Recommendation(
         icon: Icons.shield_outlined,
         title: 'Review suspicious apps',
-        body: 'You have apps with high suspicion scores. Visit Threat Center for details.',
-        color: CtosColors.critical,
-      ));
-    }
-
-    if (snap.networkRisk > 15) {
-      recs.add(_Recommendation(
-        icon: Icons.vpn_key_outlined,
-        title: 'Consider using a VPN',
-        body: 'Unusual network connections detected. A VPN can encrypt your traffic.',
+        body: 'You have apps with elevated suspicion scores. Check Threat Center for details.',
         color: CtosColors.amber,
       ));
-    }
-
-    if (snap.appRisk > 30) {
+    } else if (snap.totalScore >= 30) {
       recs.add(_Recommendation(
-        icon: Icons.delete_outline,
-        title: 'Remove unused apps',
-        body: 'Apps with high permission usage increase your attack surface.',
-        color: CtosColors.amber,
+        icon: Icons.manage_search_outlined,
+        title: 'Stay vigilant',
+        body: 'Risk is moderate. Run a full scan periodically to catch new threats early.',
+        color: CtosColors.cyan,
       ));
-    }
-
-    if (snap.totalScore < 30) {
+    } else {
       recs.add(_Recommendation(
         icon: Icons.check_circle_outline,
         title: 'Your device looks clean',
@@ -251,6 +245,32 @@ class RiskDashboardScreen extends ConsumerWidget {
         color: CtosColors.safe,
       ));
     }
+
+    if (snap.networkRisk > 10) {
+      recs.add(_Recommendation(
+        icon: Icons.vpn_key_outlined,
+        title: 'Consider using a VPN',
+        body: 'Unusual network connections detected. A VPN encrypts your traffic end-to-end.',
+        color: CtosColors.amber,
+      ));
+    }
+
+    if (snap.appRisk > 25) {
+      recs.add(_Recommendation(
+        icon: Icons.delete_outline,
+        title: 'Audit your installed apps',
+        body: 'Apps with excessive permissions increase your attack surface. Remove unused ones.',
+        color: CtosColors.amber,
+      ));
+    }
+
+    // Always-on hygiene tip
+    recs.add(_Recommendation(
+      icon: Icons.system_update_outlined,
+      title: 'Keep apps and OS updated',
+      body: 'Security patches fix vulnerabilities. Enable automatic updates to stay protected.',
+      color: CtosColors.textMuted,
+    ));
 
     return recs;
   }

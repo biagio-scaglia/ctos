@@ -1,43 +1,56 @@
+import 'dart:async';
+import 'package:http/http.dart' as http;
+
 import '../constants.dart';
 import '../../data/models/network_connection.dart';
 
 class NetworkClassifier {
   NetworkClassifier._();
 
+  // Real Tor exit nodes fetched from torproject.org
+  static Set<String> _torExitNodes = {};
+  static DateTime? _torFetchedAt;
+
+  /// Fetch the live Tor exit node list (no API key needed).
+  /// Cached for 1 hour. Call once at startup from NetworkMonitorService.
+  static Future<void> loadTorExitNodes() async {
+    final now = DateTime.now();
+    if (_torFetchedAt != null &&
+        now.difference(_torFetchedAt!) < const Duration(hours: 1)) {
+      return; // still fresh
+    }
+    try {
+      final response = await http
+          .get(Uri.parse('https://check.torproject.org/torbulkexitlist'))
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode == 200) {
+        _torExitNodes = response.body
+            .split('\n')
+            .map((l) => l.trim())
+            .where((l) => l.isNotEmpty && !l.startsWith('#'))
+            .toSet();
+        _torFetchedAt = now;
+      }
+    } catch (_) {
+      // Fall back to known prefixes (see _isTorOrAnonymizer)
+    }
+  }
+
   static int scoreSuspicion(NetworkConnection conn) {
     int score = 0;
 
-    // Known datacenter IP ranges
-    if (_isDatacenter(conn.remoteIp)) {
-      score += 15;
-    }
+    if (_isDatacenter(conn.remoteIp)) score += 15;
+    if (_isUnusualPort(conn.port)) score += 20;
+    if (CtosConstants.vpnPorts.contains(conn.port)) score += 15;
 
-    // Unusual ports
-    if (_isUnusualPort(conn.port)) {
-      score += 20;
-    }
-
-    // Known VPN/proxy ports
-    if (CtosConstants.vpnPorts.contains(conn.port)) {
-      score += 15;
-    }
-
-    // High traffic on unexpected apps
     if (conn.trafficKbps > 5000) {
       score += 15;
     } else if (conn.trafficKbps > 1000) {
       score += 8;
     }
 
-    // No hostname resolved (bare IP)
-    if (conn.hostname.isEmpty || conn.hostname == conn.remoteIp) {
-      score += 10;
-    }
-
-    // Known Tor exit nodes / anonymizers
-    if (_isTorOrAnonymizer(conn.remoteIp)) {
-      score += 40;
-    }
+    if (conn.hostname.isEmpty || conn.hostname == conn.remoteIp) score += 10;
+    if (_isTorOrAnonymizer(conn.remoteIp)) score += 40;
 
     return score.clamp(0, 100);
   }
@@ -56,7 +69,7 @@ class NetworkClassifier {
   }
 
   static bool _isDatacenter(String ip) {
-    return CtosConstants.datacenterPrefixes.any((prefix) => ip.startsWith(prefix));
+    return CtosConstants.datacenterPrefixes.any((p) => ip.startsWith(p));
   }
 
   static bool _isUnusualPort(int port) {
@@ -67,10 +80,11 @@ class NetworkClassifier {
   }
 
   static bool _isTorOrAnonymizer(String ip) {
-    // In a real app this would query a Tor exit node list API
-    // For demo, we flag known example ranges
-    const knownTorPrefixes = ['185.220.', '199.249.', '204.8.'];
-    return knownTorPrefixes.any((prefix) => ip.startsWith(prefix));
+    // Use live list when available
+    if (_torExitNodes.isNotEmpty) return _torExitNodes.contains(ip);
+    // Fallback: well-known Tor exit prefixes
+    const fallbackPrefixes = ['185.220.', '199.249.', '204.8.', '171.25.'];
+    return fallbackPrefixes.any((p) => ip.startsWith(p));
   }
 
   static bool isPrivateIp(String ip) {

@@ -6,6 +6,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'app.dart';
 import 'data/local/hive_service.dart';
 import 'services/notification_service.dart';
+import 'services/network_monitor_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,9 @@ void main() async {
 
   // Init notifications
   await NotificationService.init();
+
+  // Fetch real Tor exit list + external IP (non-blocking if offline)
+  NetworkMonitorService.init().ignore();
 
   runApp(
     const ProviderScope(
