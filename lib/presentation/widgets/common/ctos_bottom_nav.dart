@@ -30,7 +30,7 @@ class CtosBottomNav extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: CtosColors.cyan.withOpacity(0.05),
+            color: CtosColors.cyan.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),

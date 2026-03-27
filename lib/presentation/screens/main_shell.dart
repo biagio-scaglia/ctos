@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/common/scan_line_overlay.dart';
 import '../widgets/hud/floating_hud.dart';
-import '../widgets/common/ctos_bottom_nav.dart';
 import '../../core/theme/ctos_colors.dart';
 import '../../services/audio_service.dart';
 import 'home/home_screen.dart';
@@ -78,7 +77,7 @@ class _CtosNav extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: CtosColors.cyan.withOpacity(0.05),
+            color: CtosColors.cyan.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -102,7 +101,7 @@ class _CtosNav extends StatelessWidget {
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
                       color: isGuard && selected
-                          ? CtosColors.safe.withOpacity(0.08)
+                          ? CtosColors.safe.withValues(alpha: 0.08)
                           : Colors.transparent,
                       border: Border(
                         top: BorderSide(

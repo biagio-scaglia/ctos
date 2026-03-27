@@ -47,7 +47,7 @@ class ThreatCenterScreen extends ConsumerWidget {
 
               if (suspicious.isEmpty) {
                 return HudCard(
-                  borderColor: CtosColors.safe.withOpacity(0.3),
+                  borderColor: CtosColors.safe.withValues(alpha: 0.3),
                   child: const Row(
                     children: [
                       Icon(Icons.check_circle_outline,
@@ -94,7 +94,7 @@ class ThreatCenterScreen extends ConsumerWidget {
 
               if (suspicious.isEmpty) {
                 return HudCard(
-                  borderColor: CtosColors.safe.withOpacity(0.3),
+                  borderColor: CtosColors.safe.withValues(alpha: 0.3),
                   child: const Row(
                     children: [
                       Icon(Icons.check_circle_outline,
@@ -145,7 +145,7 @@ class ThreatCenterScreen extends ConsumerWidget {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
                       child: HudCard(
-                        borderColor: CtosColors.amber.withOpacity(0.4),
+                        borderColor: CtosColors.amber.withValues(alpha: 0.4),
                         padding: const EdgeInsets.all(12),
                         child: Row(
                           children: [
@@ -224,8 +224,8 @@ class _ThreatAppCard extends StatelessWidget {
     final reasons = SuspicionCalculator.reasons(app);
 
     return HudCard(
-      borderColor: color.withOpacity(0.4),
-      glowColor: color.withOpacity(0.15),
+      borderColor: color.withValues(alpha: 0.4),
+      glowColor: color.withValues(alpha: 0.15),
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +260,7 @@ class _ThreatAppCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: color, width: 1.5),
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                 ),
                 child: Center(
                   child: Text('${app.suspicionScore}',
@@ -321,8 +321,8 @@ class _ThreatConnCard extends StatelessWidget {
     final color = CtosColors.riskColor(conn.suspicionScore);
 
     return HudCard(
-      borderColor: color.withOpacity(0.4),
-      glowColor: color.withOpacity(0.1),
+      borderColor: color.withValues(alpha: 0.4),
+      glowColor: color.withValues(alpha: 0.1),
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [

@@ -5,7 +5,6 @@ import '../../../core/theme/ctos_colors.dart';
 import '../../providers/network_provider.dart';
 import '../../widgets/charts/traffic_graph.dart';
 import '../../widgets/common/hud_card.dart';
-import '../../widgets/common/glitch_text.dart';
 import '../../../data/models/network_connection.dart';
 import '../../../data/models/vpn_status.dart';
 
@@ -117,8 +116,8 @@ class _VpnCard extends StatelessWidget {
     final color = active ? CtosColors.vpnActive : CtosColors.vpnInactive;
 
     return HudCard(
-      borderColor: color.withOpacity(0.5),
-      glowColor: active ? color.withOpacity(0.3) : Colors.transparent,
+      borderColor: color.withValues(alpha: 0.5),
+      glowColor: active ? color.withValues(alpha: 0.3) : Colors.transparent,
       padding: const EdgeInsets.all(12),
       child: Row(
         children: [
@@ -191,9 +190,9 @@ class _ConnectionTile extends StatelessWidget {
     final isHighRisk = conn.suspicionScore > 50;
 
     return HudCard(
-      borderColor: isHighRisk ? color.withOpacity(0.4) : CtosColors.cardBorder,
+      borderColor: isHighRisk ? color.withValues(alpha: 0.4) : CtosColors.cardBorder,
       glowColor:
-          isHighRisk ? color.withOpacity(0.15) : Colors.transparent,
+          isHighRisk ? color.withValues(alpha: 0.15) : Colors.transparent,
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,8 +293,8 @@ class _Flag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.5), width: 1),
-        color: color.withOpacity(0.08),
+        border: Border.all(color: color.withValues(alpha: 0.5), width: 1),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Text(
         label,

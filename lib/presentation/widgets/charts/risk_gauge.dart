@@ -145,7 +145,7 @@ class _GaugePainter extends CustomPainter {
         center + Offset(cos(angle) * innerR, sin(angle) * innerR),
         center + Offset(cos(angle) * outerR, sin(angle) * outerR),
         Paint()
-          ..color = CtosColors.textMuted.withOpacity(0.5)
+          ..color = CtosColors.textMuted.withValues(alpha: 0.5)
           ..strokeWidth = isMain ? 1.5 : 0.8,
       );
     }

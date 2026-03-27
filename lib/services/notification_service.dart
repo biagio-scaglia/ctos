@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 const _guardianChannel = MethodChannel('com.ctos.companion/guardian');
@@ -42,8 +41,8 @@ class NotificationService {
           severity: severity,
           timestamp: DateTime.now(),
         ));
-    if (_notifications.length > 50) _notifications.removeLast();
-    for (final l in _listeners) l();
+    if (_notifications.length > 50) { _notifications.removeLast(); }
+    for (final l in _listeners) { l(); }
 
     // Real Android notification (non-blocking)
     if (!kIsWeb) {
@@ -64,7 +63,7 @@ class NotificationService {
     final idx = _notifications.indexWhere((n) => n.id == id);
     if (idx != -1) {
       _notifications[idx] = _notifications[idx].copyWith(read: true);
-      for (final l in _listeners) l();
+      for (final l in _listeners) { l(); }
     }
   }
 
@@ -72,7 +71,7 @@ class NotificationService {
     for (int i = 0; i < _notifications.length; i++) {
       _notifications[i] = _notifications[i].copyWith(read: true);
     }
-    for (final l in _listeners) l();
+    for (final l in _listeners) { l(); }
   }
 }
 

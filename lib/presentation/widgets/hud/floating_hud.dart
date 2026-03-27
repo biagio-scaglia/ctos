@@ -53,11 +53,11 @@ class _FloatingHudState extends ConsumerState<FloatingHud>
             width: 120,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: CtosColors.surface.withOpacity(0.9),
+              color: CtosColors.surface.withValues(alpha: 0.9),
               border: Border.all(color: CtosColors.cyanDark, width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: CtosColors.cyan.withOpacity(0.15),
+                  color: CtosColors.cyan.withValues(alpha: 0.15),
                   blurRadius: 12,
                 ),
               ],

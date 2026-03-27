@@ -158,7 +158,7 @@ class _TimelineEventCard extends StatelessWidget {
     final color = _severityColor(event.severityLevel);
 
     return HudCard(
-      borderColor: color.withOpacity(0.3),
+      borderColor: color.withValues(alpha: 0.3),
       padding: const EdgeInsets.all(12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,7 +191,7 @@ class _TimelineEventCard extends StatelessWidget {
             width: 1,
             height: 40,
             margin: const EdgeInsets.symmetric(horizontal: 8),
-            color: color.withOpacity(0.4),
+            color: color.withValues(alpha: 0.4),
           ),
           Expanded(
             child: Column(
@@ -296,7 +296,7 @@ class _SeverityBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
         border: Border.all(color: color, width: 0.8),
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
       ),
       child: Text(label,
           style: TextStyle(
@@ -330,7 +330,7 @@ class _FilterChip extends StatelessWidget {
           border: Border.all(
             color: selected ? CtosColors.cyan : CtosColors.cardBorder,
           ),
-          color: selected ? CtosColors.cyan.withOpacity(0.15) : Colors.transparent,
+          color: selected ? CtosColors.cyan.withValues(alpha: 0.15) : Colors.transparent,
         ),
         child: Text(
           label,

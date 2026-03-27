@@ -162,7 +162,7 @@ class _GuardianScreenState extends ConsumerState<GuardianScreen> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: CtosColors.cyan.withOpacity(0.15),
+                            color: CtosColors.cyan.withValues(alpha: 0.15),
                             border: Border.all(color: CtosColors.cyan),
                           ),
                           child: _checking
@@ -284,9 +284,9 @@ class _GuardianStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return HudCard(
       borderColor: isActive
-          ? CtosColors.safe.withOpacity(0.5)
-          : CtosColors.textMuted.withOpacity(0.3),
-      glowColor: isActive ? CtosColors.safe.withOpacity(0.2) : Colors.transparent,
+          ? CtosColors.safe.withValues(alpha: 0.5)
+          : CtosColors.textMuted.withValues(alpha: 0.3),
+      glowColor: isActive ? CtosColors.safe.withValues(alpha: 0.2) : Colors.transparent,
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
@@ -299,7 +299,7 @@ class _GuardianStatusCard extends StatelessWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: CtosColors.safe.withOpacity(0.1),
+                    color: CtosColors.safe.withValues(alpha: 0.1),
                   ),
                 ),
               Icon(
@@ -392,8 +392,8 @@ class _UrlResultCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        border: Border.all(color: color.withOpacity(0.5)),
-        color: color.withOpacity(0.08),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+        color: color.withValues(alpha: 0.08),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -417,7 +417,7 @@ class _UrlResultCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   border: Border.all(color: color),
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                 ),
                 child: Text(
                   '${result.score}',
@@ -440,8 +440,8 @@ class _UrlResultCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      border: Border.all(color: color.withOpacity(0.5)),
-                      color: color.withOpacity(0.08),
+                      border: Border.all(color: color.withValues(alpha: 0.5)),
+                      color: color.withValues(alpha: 0.08),
                     ),
                     child: Text(
                       f,
@@ -474,7 +474,7 @@ class _AdviceCard extends StatelessWidget {
     };
 
     return HudCard(
-      borderColor: color.withOpacity(0.3),
+      borderColor: color.withValues(alpha: 0.3),
       padding: const EdgeInsets.all(10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

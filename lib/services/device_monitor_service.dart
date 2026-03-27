@@ -7,7 +7,6 @@ import 'package:flutter/services.dart';
 
 import '../data/models/app_info.dart';
 import '../core/utils/suspicion_calculator.dart';
-import '../core/constants.dart';
 
 /// Platform channel for Android-specific APIs
 const _channel = MethodChannel('com.ctos.companion/device');

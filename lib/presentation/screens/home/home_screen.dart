@@ -51,7 +51,7 @@ class HomeScreen extends ConsumerWidget {
                         fontFamily: 'ShareTechMono',
                         fontSize: 10,
                         color: CtosColors.vpnActive)),
-                backgroundColor: CtosColors.vpnActive.withOpacity(0.1),
+                backgroundColor: CtosColors.vpnActive.withValues(alpha: 0.1),
                 side: const BorderSide(color: CtosColors.vpnActive),
                 padding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
@@ -115,8 +115,8 @@ class HomeScreen extends ConsumerWidget {
             GestureDetector(
               onTap: () => DeviceMonitorService.openUsageSettings(),
               child: HudCard(
-                borderColor: CtosColors.amber.withOpacity(0.6),
-                glowColor: CtosColors.amber.withOpacity(0.15),
+                borderColor: CtosColors.amber.withValues(alpha: 0.6),
+                glowColor: CtosColors.amber.withValues(alpha: 0.15),
                 padding: const EdgeInsets.all(12),
                 child: Row(
                   children: [
@@ -146,7 +146,7 @@ class HomeScreen extends ConsumerWidget {
           if (suspiciousConns > 0)
             HudCard(
               borderColor: CtosColors.amber,
-              glowColor: CtosColors.amber.withOpacity(0.3),
+              glowColor: CtosColors.amber.withValues(alpha: 0.3),
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
@@ -192,8 +192,8 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildRiskSection(
       BuildContext context, WidgetRef ref, int score, String levelName) {
     return HudCard(
-      borderColor: CtosColors.riskColor(score).withOpacity(0.5),
-      glowColor: CtosColors.riskColor(score).withOpacity(0.2),
+      borderColor: CtosColors.riskColor(score).withValues(alpha: 0.5),
+      glowColor: CtosColors.riskColor(score).withValues(alpha: 0.2),
       child: Column(
         children: [
           const _SectionHeader('DEVICE RISK LEVEL'),
@@ -222,7 +222,7 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HudCard(
-      borderColor: color.withOpacity(0.3),
+      borderColor: color.withValues(alpha: 0.3),
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,10 +261,10 @@ class _ScanButton extends StatelessWidget {
         height: 56,
         decoration: BoxDecoration(
           border: Border.all(color: CtosColors.cyan, width: 1),
-          color: CtosColors.cyan.withOpacity(0.1),
+          color: CtosColors.cyan.withValues(alpha: 0.1),
           boxShadow: [
             BoxShadow(
-                color: CtosColors.cyan.withOpacity(0.2), blurRadius: 12)
+                color: CtosColors.cyan.withValues(alpha: 0.2), blurRadius: 12)
           ],
         ),
         child: const Row(
@@ -286,7 +286,7 @@ class _ScanButton extends StatelessWidget {
         ),
       ),
     ).animate(onPlay: (c) => c.repeat(reverse: true))
-        .shimmer(duration: 3.seconds, color: CtosColors.cyan.withOpacity(0.2));
+        .shimmer(duration: 3.seconds, color: CtosColors.cyan.withValues(alpha: 0.2));
   }
 }
 
@@ -300,7 +300,7 @@ class _EventRow extends StatelessWidget {
     final color = _severityColor(e.severityLevel);
 
     return HudCard(
-      borderColor: color.withOpacity(0.3),
+      borderColor: color.withValues(alpha: 0.3),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [

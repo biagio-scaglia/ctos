@@ -99,7 +99,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     border: Border.all(color: CtosColors.cardBorder),
-                    color: CtosColors.surface.withOpacity(0.5),
+                    color: CtosColors.surface.withValues(alpha: 0.5),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -124,7 +124,7 @@ class _SplashScreenState extends State<SplashScreen> {
                                   style: TextStyle(
                                     fontFamily: 'ShareTechMono',
                                     fontSize: 11,
-                                    color: CtosColors.cyan.withOpacity(0.6),
+                                    color: CtosColors.cyan.withValues(alpha: 0.6),
                                   ),
                                 ),
                                 Text(

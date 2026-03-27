@@ -43,8 +43,8 @@ class RiskDashboardScreen extends ConsumerWidget {
         children: [
           // ── Main gauge ─────────────────────────────────────────────
           HudCard(
-            borderColor: CtosColors.riskColor(snap.totalScore).withOpacity(0.4),
-            glowColor: CtosColors.riskColor(snap.totalScore).withOpacity(0.2),
+            borderColor: CtosColors.riskColor(snap.totalScore).withValues(alpha: 0.4),
+            glowColor: CtosColors.riskColor(snap.totalScore).withValues(alpha: 0.2),
             child: Column(
               children: [
                 const SizedBox(height: 8),
@@ -124,7 +124,7 @@ class RiskDashboardScreen extends ConsumerWidget {
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: HudCard(
-                borderColor: color.withOpacity(0.3),
+                borderColor: color.withValues(alpha: 0.3),
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 child: Row(
                   children: [
@@ -133,7 +133,7 @@ class RiskDashboardScreen extends ConsumerWidget {
                       style: TextStyle(
                         fontFamily: 'Orbitron',
                         fontSize: 18,
-                        color: color.withOpacity(0.5),
+                        color: color.withValues(alpha: 0.5),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -171,7 +171,7 @@ class RiskDashboardScreen extends ConsumerWidget {
           ..._buildRecommendations(snap, apps, conns).map((r) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: HudCard(
-                  borderColor: r.color.withOpacity(0.3),
+                  borderColor: r.color.withValues(alpha: 0.3),
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,

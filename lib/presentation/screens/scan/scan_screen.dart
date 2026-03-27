@@ -5,7 +5,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/theme/ctos_colors.dart';
 import '../../providers/device_provider.dart';
 import '../../widgets/charts/radar_painter.dart';
-import '../../widgets/common/glitch_text.dart';
 import '../../widgets/common/hud_card.dart';
 import '../../../core/utils/suspicion_calculator.dart';
 import '../../../data/models/app_info.dart';
@@ -91,7 +90,7 @@ class ScanScreen extends ConsumerWidget {
                   height: 48,
                   decoration: BoxDecoration(
                     border: Border.all(color: CtosColors.cyan),
-                    color: CtosColors.cyan.withOpacity(0.1),
+                    color: CtosColors.cyan.withValues(alpha: 0.1),
                   ),
                   child: const Center(
                     child: Text('INITIATE SCAN',
@@ -160,7 +159,7 @@ class _AppTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: HudCard(
-        borderColor: color.withOpacity(0.3),
+        borderColor: color.withValues(alpha: 0.3),
         padding: const EdgeInsets.all(12),
         onTap: () => _showDetail(context),
         child: Row(
@@ -172,7 +171,7 @@ class _AppTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(color: color, width: 1.5),
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
               ),
               child: Center(
                 child: Text(
@@ -213,7 +212,7 @@ class _AppTile extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
                 border: Border.all(color: color, width: 1),
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
               ),
               child: Text(label,
                   style: TextStyle(

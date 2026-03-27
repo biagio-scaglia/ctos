@@ -50,8 +50,8 @@ class TrafficSparkline extends StatelessWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    color.withOpacity(0.3),
-                    color.withOpacity(0.0),
+                    color.withValues(alpha: 0.3),
+                    color.withValues(alpha: 0.0),
                   ],
                 ),
               ),
@@ -144,8 +144,8 @@ class TrafficChart extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  CtosColors.cyan.withOpacity(0.25),
-                  CtosColors.cyan.withOpacity(0.0),
+                  CtosColors.cyan.withValues(alpha: 0.25),
+                  CtosColors.cyan.withValues(alpha: 0.0),
                 ],
               ),
             ),

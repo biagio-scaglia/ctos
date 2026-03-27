@@ -20,20 +20,20 @@ class SuspicionCalculator {
     score += (app.wakeLocksCount * 2).clamp(0, 7);
 
     // 3. Network traffic anomaly (max 25)
-    if (app.networkTrafficMb > 200) score += 20;
-    else if (app.networkTrafficMb > 100) score += 12;
-    else if (app.networkTrafficMb > 30) score += 6;
+    if (app.networkTrafficMb > 200) { score += 20; }
+    else if (app.networkTrafficMb > 100) { score += 12; }
+    else if (app.networkTrafficMb > 30) { score += 6; }
 
-    if (app.connectsToDatacenter) score += 5;
+    if (app.connectsToDatacenter) { score += 5; }
 
     // 4. Resource usage (max 20)
-    if (app.cpuUsage > 20) score += 10;
-    else if (app.cpuUsage > 10) score += 5;
-    else if (app.cpuUsage > 5) score += 2;
+    if (app.cpuUsage > 20) { score += 10; }
+    else if (app.cpuUsage > 10) { score += 5; }
+    else if (app.cpuUsage > 5) { score += 2; }
 
-    if (app.ramUsageMb > 400) score += 10;
-    else if (app.ramUsageMb > 150) score += 5;
-    else if (app.ramUsageMb > 50) score += 2;
+    if (app.ramUsageMb > 400) { score += 10; }
+    else if (app.ramUsageMb > 150) { score += 5; }
+    else if (app.ramUsageMb > 50) { score += 2; }
 
     return score.clamp(0, 100);
   }

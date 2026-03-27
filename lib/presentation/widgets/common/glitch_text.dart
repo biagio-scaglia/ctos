@@ -85,7 +85,7 @@ class _GlitchTextState extends State<GlitchText>
           offset: Offset(-_offsetX, -_offsetY),
           child: Text(
             widget.text,
-            style: style.copyWith(color: CtosColors.cyan.withOpacity(0.6)),
+            style: style.copyWith(color: CtosColors.cyan.withValues(alpha: 0.6)),
           ),
         ),
         // Red/magenta layer shifted right
@@ -94,7 +94,7 @@ class _GlitchTextState extends State<GlitchText>
           child: Text(
             widget.text,
             style: style.copyWith(
-                color: const Color(0xFFFF0080).withOpacity(0.6)),
+                color: const Color(0xFFFF0080).withValues(alpha: 0.6)),
           ),
         ),
         // Main text

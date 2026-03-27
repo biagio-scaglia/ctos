@@ -21,7 +21,7 @@ class HudCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final glow = glowColor ?? borderColor.withOpacity(0.3);
+    final glow = glowColor ?? borderColor.withValues(alpha: 0.3);
 
     return GestureDetector(
       onTap: onTap,
@@ -87,7 +87,7 @@ class _HudBorderPainter extends CustomPainter {
 
     // Subtle inner border
     final innerPaint = Paint()
-      ..color = borderColor.withOpacity(0.2)
+      ..color = borderColor.withValues(alpha: 0.2)
       ..strokeWidth = 0.5
       ..style = PaintingStyle.stroke;
 
@@ -115,7 +115,7 @@ class HudChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
         border: Border.all(color: color, width: 1),
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
       ),
       child: Text(
         label,

@@ -108,9 +108,9 @@ class _RadarPainter extends CustomPainter {
         startAngle: sweepAngle,
         endAngle: sweepAngle + pi / 2,
         colors: [
-          CtosColors.cyan.withOpacity(0),
-          CtosColors.cyan.withOpacity(0.25),
-          CtosColors.cyan.withOpacity(0),
+          CtosColors.cyan.withValues(alpha: 0),
+          CtosColors.cyan.withValues(alpha: 0.25),
+          CtosColors.cyan.withValues(alpha: 0),
         ],
         tileMode: TileMode.clamp,
       ).createShader(Rect.fromCircle(center: center, radius: radius));
@@ -119,7 +119,7 @@ class _RadarPainter extends CustomPainter {
 
     // — Sweep line ————————————————————————————————————————————————————
     final linePaint = Paint()
-      ..color = CtosColors.cyan.withOpacity(0.8)
+      ..color = CtosColors.cyan.withValues(alpha: 0.8)
       ..strokeWidth = 1.5;
 
     canvas.drawLine(
@@ -130,7 +130,7 @@ class _RadarPainter extends CustomPainter {
 
     // — Outer ring ————————————————————————————————————————————————————
     final outerPaint = Paint()
-      ..color = CtosColors.cyan.withOpacity(0.4)
+      ..color = CtosColors.cyan.withValues(alpha: 0.4)
       ..strokeWidth = 1
       ..style = PaintingStyle.stroke;
     canvas.drawCircle(center, radius, outerPaint);
@@ -145,7 +145,7 @@ class _RadarPainter extends CustomPainter {
       canvas.drawCircle(
         Offset(x, y),
         6,
-        Paint()..color = point.color.withOpacity(0.3),
+        Paint()..color = point.color.withValues(alpha: 0.3),
       );
       // Dot
       canvas.drawCircle(
@@ -160,7 +160,7 @@ class _RadarPainter extends CustomPainter {
         canvas.drawCircle(
           Offset(x, y),
           8,
-          Paint()..color = point.color.withOpacity(0.5),
+          Paint()..color = point.color.withValues(alpha: 0.5),
         );
       }
     }
