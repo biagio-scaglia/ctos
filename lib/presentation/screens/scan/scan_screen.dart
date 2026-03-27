@@ -12,11 +12,46 @@ import '../../../data/models/app_info.dart';
 import '../../../services/audio_service.dart';
 import '../../widgets/ai_explain_sheet.dart';
 
-class ScanScreen extends ConsumerWidget {
+enum _ScanFilter { all, low, moderate, high, critical }
+
+extension _ScanFilterExt on _ScanFilter {
+  String get label => switch (this) {
+        _ScanFilter.all => 'ALL',
+        _ScanFilter.low => 'LOW+',
+        _ScanFilter.moderate => 'MOD+',
+        _ScanFilter.high => 'HIGH+',
+        _ScanFilter.critical => 'CRIT',
+      };
+
+  int get minScore => switch (this) {
+        _ScanFilter.all => 0,
+        _ScanFilter.low => 20,
+        _ScanFilter.moderate => 40,
+        _ScanFilter.high => 60,
+        _ScanFilter.critical => 80,
+      };
+
+  Color get color => switch (this) {
+        _ScanFilter.all => CtosColors.cyan,
+        _ScanFilter.low => CtosColors.low,
+        _ScanFilter.moderate => CtosColors.moderate,
+        _ScanFilter.high => CtosColors.high,
+        _ScanFilter.critical => CtosColors.critical,
+      };
+}
+
+class ScanScreen extends ConsumerStatefulWidget {
   const ScanScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ScanScreen> createState() => _ScanScreenState();
+}
+
+class _ScanScreenState extends ConsumerState<ScanScreen> {
+  _ScanFilter _filter = _ScanFilter.all;
+
+  @override
+  Widget build(BuildContext context) {
     final scanState = ref.watch(scanProvider);
     final appsAsync = ref.watch(appsProvider);
 
@@ -107,6 +142,53 @@ class ScanScreen extends ConsumerWidget {
               ),
             ),
 
+          // Filter chips
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              children: _ScanFilter.values.map((f) {
+                final selected = _filter == f;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _filter = f),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: selected
+                              ? f.color
+                              : f.color.withValues(alpha: 0.35),
+                        ),
+                        color: selected
+                            ? f.color.withValues(alpha: 0.15)
+                            : Colors.transparent,
+                      ),
+                      child: Text(
+                        f.label,
+                        style: TextStyle(
+                          fontFamily: 'ShareTechMono',
+                          fontSize: 10,
+                          color: selected
+                              ? f.color
+                              : f.color.withValues(alpha: 0.55),
+                          letterSpacing: 1,
+                          fontWeight: selected
+                              ? FontWeight.w700
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+
           const SizedBox(height: 8),
 
           // App list
@@ -115,6 +197,9 @@ class ScanScreen extends ConsumerWidget {
               data: (apps) {
                 final sorted = [...apps]
                   ..sort((a, b) => b.suspicionScore.compareTo(a.suspicionScore));
+                final filtered = sorted
+                    .where((a) => a.suspicionScore >= _filter.minScore)
+                    .toList();
                 final fakeMap = {
                   for (final m in FakeAppDetector.analyze(apps))
                     m.app.packageName: m
@@ -123,16 +208,56 @@ class ScanScreen extends ConsumerWidget {
                   children: [
                     if (fakeMap.isNotEmpty)
                       _FakeAppBanner(count: fakeMap.length),
-                    Expanded(
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: sorted.length,
-                        itemBuilder: (context, i) => _AppTile(
-                          app: sorted[i],
-                          index: i,
-                          fakeMatch: fakeMap[sorted[i].packageName],
-                        ),
+                    // Count label
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 6),
+                      child: Row(
+                        children: [
+                          Text(
+                            '${filtered.length} APP',
+                            style: const TextStyle(
+                              fontFamily: 'ShareTechMono',
+                              fontSize: 10,
+                              color: CtosColors.textMuted,
+                              letterSpacing: 1,
+                            ),
+                          ),
+                          if (_filter != _ScanFilter.all) ...[
+                            const SizedBox(width: 6),
+                            Text(
+                              '(${sorted.length - filtered.length} nascoste)',
+                              style: const TextStyle(
+                                fontFamily: 'ShareTechMono',
+                                fontSize: 10,
+                                color: CtosColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
+                    ),
+                    Expanded(
+                      child: filtered.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'Nessuna app in questo range',
+                                style: TextStyle(
+                                  fontFamily: 'ShareTechMono',
+                                  fontSize: 12,
+                                  color: CtosColors.textMuted,
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, i) => _AppTile(
+                                app: filtered[i],
+                                index: i,
+                                fakeMatch: fakeMap[filtered[i].packageName],
+                              ),
+                            ),
                     ),
                   ],
                 );

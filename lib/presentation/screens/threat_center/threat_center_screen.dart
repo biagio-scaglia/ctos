@@ -22,9 +22,9 @@ class ThreatCenterScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: CtosColors.background,
       appBar: AppBar(
-        title: GlitchText(
+        title: const GlitchText(
           'THREAT CENTER',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Orbitron',
             fontSize: 15,
             color: CtosColors.critical,
@@ -41,7 +41,7 @@ class ThreatCenterScreen extends ConsumerWidget {
           appsAsync.when(
             data: (apps) {
               final suspicious = apps
-                  .where((a) => a.suspicionScore >= 40)
+                  .where((a) => a.suspicionScore >= 20)
                   .toList()
                 ..sort((a, b) => b.suspicionScore.compareTo(a.suspicionScore));
 
