@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -7,11 +9,13 @@ import '../data/models/network_connection.dart';
 import '../core/utils/network_classifier.dart';
 import '../core/constants.dart';
 
+const _channel = MethodChannel('com.ctos.companion/device');
+
 class NetworkMonitorService {
   static final _rng = Random();
   static final _geoCache = <String, Map<String, dynamic>>{};
 
-  /// Real external IP of the device (fetched once from ipify.org)
+  /// Real external IP fetched from ipify.org (populated at init)
   static String? realExternalIp;
 
   /// Initialise: load Tor exit list + fetch own external IP
@@ -53,7 +57,84 @@ class NetworkMonitorService {
   }
 
   static Future<List<NetworkConnection>> getCurrentConnections() async {
+    // On Android, try real /proc/net/tcp data via MethodChannel
+    if (!kIsWeb) {
+      try {
+        final raw = await _channel
+            .invokeMethod<List>('getNetworkConnections')
+            .timeout(const Duration(seconds: 3));
+        if (raw != null && raw.isNotEmpty) {
+          return _parseRealConnections(raw);
+        }
+      } catch (_) {
+        // Fall through to simulated
+      }
+    }
     return _simulatedConnections();
+  }
+
+  /// Parse raw connection maps from Kotlin into NetworkConnection objects.
+  /// Geolocation is fetched in the background and cached.
+  static Future<List<NetworkConnection>> _parseRealConnections(
+      List<dynamic> raw) async {
+    final conns = <NetworkConnection>[];
+
+    for (final item in raw) {
+      final m = Map<String, dynamic>.from(item as Map);
+      final ip = m['remoteIp'] as String? ?? '';
+      final port = m['remotePort'] as int? ?? 0;
+      final proto = m['remotePort'] != null
+          ? (m['protocol'] as String? ?? 'TCP')
+          : 'TCP';
+      final packages = List<String>.from(m['packages'] ?? []);
+
+      if (ip.isEmpty || NetworkClassifier.isPrivateIp(ip)) continue;
+
+      // Geolocation (cached, non-blocking — returns null first call)
+      final geo = _geoCache[ip];
+      if (geo == null) {
+        // Fire and forget — next stream tick will have it cached
+        geolocateIp(ip);
+      }
+
+      final hostname = packages.isNotEmpty ? packages.first : '';
+      final conn = NetworkConnection(
+        remoteIp: ip,
+        hostname: hostname,
+        port: port,
+        protocol: proto,
+        country: geo?['country'] as String? ?? '',
+        countryCode: geo?['countryCode'] as String? ?? '',
+        provider: geo?['isp'] as String? ?? '',
+        isKnownDatacenter: !NetworkClassifier.isPrivateIp(ip),
+        trafficKbps: 0,
+        suspicionScore: 0,
+        flags: [],
+        firstSeen: DateTime.now(),
+        lastSeen: DateTime.now(),
+      );
+
+      final score = NetworkClassifier.scoreSuspicion(conn);
+      final flags = NetworkClassifier.flags(conn);
+
+      conns.add(NetworkConnection(
+        remoteIp: conn.remoteIp,
+        hostname: conn.hostname,
+        port: conn.port,
+        protocol: conn.protocol,
+        country: conn.country,
+        countryCode: conn.countryCode,
+        provider: conn.provider,
+        isKnownDatacenter: conn.isKnownDatacenter,
+        trafficKbps: conn.trafficKbps,
+        suspicionScore: score,
+        flags: flags,
+        firstSeen: conn.firstSeen,
+        lastSeen: conn.lastSeen,
+      ));
+    }
+
+    return conns;
   }
 
   static Future<Map<String, dynamic>?> geolocateIp(String ip) async {

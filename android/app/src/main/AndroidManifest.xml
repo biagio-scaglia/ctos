@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -47,11 +48,18 @@
             android:value="2" />
     </application>
 
+    <!-- Required on Android 11+ to read all installed packages -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
     <queries>
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.BOOT_COMPLETED" />
         </intent>
     </queries>
 </manifest>
