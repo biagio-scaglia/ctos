@@ -387,6 +387,7 @@ class _AppTile extends StatelessWidget {
                   context: context,
                   backgroundColor: Colors.transparent,
                   isScrollControlled: true,
+                  useSafeArea: true,
                   builder: (_) => AiExplainSheet.app(app: app),
                 );
               },

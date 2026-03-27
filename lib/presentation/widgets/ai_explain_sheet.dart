@@ -98,7 +98,11 @@ class _AiExplainSheetState extends State<AiExplainSheet> {
     final subtitle = widget.app?.packageName ??
         '${widget.connection?.port}/${widget.connection?.protocol}';
 
-    return Container(
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: Container(
       height: MediaQuery.of(context).size.height * 0.72,
       decoration: const BoxDecoration(
         color: CtosColors.background,
@@ -272,7 +276,8 @@ class _AiExplainSheetState extends State<AiExplainSheet> {
             ).animate().fadeIn(duration: 300.ms),
         ],
       ),
-    );
+    ),  // Container
+    );  // Padding
   }
 
   void _submit(String q) {
