@@ -1,197 +1,246 @@
 <template>
-  <div style="max-width: 800px; margin: 0 auto">
-    <div style="margin-bottom:24px">
-      <h1 class="font-orbitron" style="font-size:16px; color:var(--cyan); letter-spacing:4px">GUARDIAN AI</h1>
-      <p class="font-mono" style="font-size:10px; color:var(--text-muted); margin-top:4px">
-        Chat con il motore di analisi AI — modello: {{ model }}
-      </p>
-    </div>
-
-    <!-- Chat history -->
-    <div class="chat-window card" ref="chatEl">
-      <div v-if="!messages.length" class="font-mono" style="color:var(--text-muted); font-size:12px; text-align:center; padding:40px 0">
-        <div style="margin-bottom:12px; font-size:18px">⚡</div>
-        GUARDIAN AI PRONTO<br/>
-        <span style="font-size:10px">Chiedi tutto ciò che vuoi sulla sicurezza del tuo sistema</span>
+  <div class="guardian-layout">
+    <!-- Left: chat terminal -->
+    <div class="terminal-panel card card-cyan">
+      <div class="terminal-header">
+        <span class="font-orbitron" style="font-size:11px; color:var(--cyan); letter-spacing:3px">GUARDIAN AI</span>
+        <span class="font-mono" style="font-size:9px; color:var(--text-muted); margin-left:12px">gpt-oss:120b-cloud</span>
+        <span class="font-mono" :class="online ? 'risk-safe' : 'risk-critical'"
+          style="font-size:9px; letter-spacing:1px; margin-left:auto">
+          {{ online ? '● ONLINE' : '○ OFFLINE' }}
+        </span>
       </div>
 
-      <div v-for="(msg, i) in messages" :key="i" class="message" :class="msg.role">
-        <div class="message-label font-mono">
-          {{ msg.role === 'user' ? '> tu' : '⚡ guardian' }}
+      <div class="messages" ref="msgBox">
+        <div v-if="!messages.length" class="font-mono" style="color:var(--text-muted); font-size:12px; line-height:2">
+          <div>> sistema di sicurezza CTOS attivo</div>
+          <div>> connessione a Guardian AI stabilita</div>
+          <div>> digita una domanda o seleziona un processo dalla lista</div>
+          <div style="margin-top:12px; color:var(--cyan)">_</div>
         </div>
-        <div class="message-content font-mono" style="white-space:pre-wrap; line-height:1.7">
-          {{ msg.content }}<span v-if="i === messages.length - 1 && loading" class="cursor">▌</span>
+
+        <div v-for="(msg, i) in messages" :key="i" class="msg" :class="msg.role">
+          <span class="msg-prefix font-mono">{{ msg.role === 'user' ? '> ' : '' }}</span>
+          <span class="msg-content font-mono">
+            {{ msg.content }}<span v-if="msg.streaming" class="cursor">▌</span>
+          </span>
         </div>
+      </div>
+
+      <div class="input-row">
+        <span class="font-mono" style="color:var(--cyan); font-size:14px; padding-right:8px">></span>
+        <input
+          v-model="input"
+          ref="inputEl"
+          class="terminal-input font-mono"
+          placeholder="chiedi al Guardian..."
+          @keydown.enter="send"
+          :disabled="streaming"
+        />
+        <button class="btn" style="white-space:nowrap" @click="send" :disabled="streaming || !input.trim()">INVIA</button>
+        <button class="btn" style="border-color:var(--text-muted);color:var(--text-muted);margin-left:4px" @click="clear">CLR</button>
       </div>
     </div>
 
-    <!-- Quick prompts -->
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px">
-      <button
-        v-for="q in quickPrompts" :key="q"
-        class="quick-btn font-mono"
-        @click="send(q)"
-        :disabled="loading"
-      >{{ q }}</button>
-    </div>
+    <!-- Right: quick actions -->
+    <div class="sidebar">
+      <div class="card" style="padding:14px; margin-bottom:12px">
+        <div class="section-label">ANALISI RAPIDA</div>
+        <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px">
+          <button class="btn" style="font-size:10px; text-align:left" @click="askSystem">📊 Analizza il sistema</button>
+          <button class="btn" style="font-size:10px; text-align:left" @click="askConnections">🌐 Controlla connessioni</button>
+          <button class="btn" style="font-size:10px; text-align:left" @click="askTopProcess">⚡ Processo più pesante</button>
+        </div>
+      </div>
 
-    <!-- Input -->
-    <div class="input-row" style="margin-top:12px">
-      <span class="font-mono" style="color:var(--cyan); font-size:14px; flex-shrink:0">&gt;&nbsp;</span>
-      <input
-        v-model="input"
-        class="chat-input font-mono"
-        placeholder="chiedi al guardian..."
-        @keydown.enter="send(input)"
-        :disabled="loading"
-        ref="inputEl"
-      />
-      <button class="btn" @click="send(input)" :disabled="loading || !input.trim()">
-        {{ loading ? '...' : 'INVIA' }}
-      </button>
-      <button class="btn" style="border-color:var(--text-muted); color:var(--text-muted)" @click="clear">CLR</button>
+      <div class="card" style="padding:14px">
+        <div class="section-label">PROCESSI — clicca per analizzare</div>
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px; max-height:400px; overflow-y:auto">
+          <div
+            v-for="p in topProcs" :key="p.pid"
+            class="proc-row font-mono"
+            :class="`risk-${p.risk_level}`"
+            @click="askProcess(p)"
+          >
+            <span style="color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1">{{ p.name }}</span>
+            <span style="font-size:10px; opacity:0.7">{{ p.cpu }}%</span>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, nextTick, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 
-const model = 'gpt-oss:120b-cloud'
-const messages = ref([])
-const input = ref('')
-const loading = ref(false)
-const chatEl = ref(null)
-const inputEl = ref(null)
+const messages  = ref([])
+const input     = ref('')
+const streaming = ref(false)
+const online    = ref(false)
+const topProcs  = ref([])
+const msgBox    = ref(null)
+const inputEl   = ref(null)
+let timer       = null
 
-const quickPrompts = [
-  'Analizza i processi più rischiosi',
-  'Il mio PC è sicuro?',
-  'Cosa sono i port 9001 e 9030?',
-  'Come riduco il rischio del sistema?',
-]
-
-const systemPrompt = {
-  role: 'system',
-  content: `Sei GUARDIAN, il motore AI di CTOS Companion Desktop.
-Analizzi la sicurezza di un PC Windows.
-Rispondi SEMPRE in italiano. Sii diretto e conciso (max 5 frasi).
-Usa terminologia tecnica ma spiega sempre in modo comprensibile.
-Dai sempre un consiglio pratico alla fine.`
+async function load() {
+  try {
+    const [status, procs] = await Promise.all([
+      fetch('/api/guardian/status').then(r => r.json()),
+      fetch('/api/processes').then(r => r.json()),
+    ])
+    online.value   = status.online
+    topProcs.value = procs.slice(0, 20)
+  } catch {}
 }
 
-function scrollDown() {
-  nextTick(() => {
-    if (chatEl.value) chatEl.value.scrollTop = chatEl.value.scrollHeight
-  })
+async function scrollBottom() {
+  await nextTick()
+  if (msgBox.value) msgBox.value.scrollTop = msgBox.value.scrollHeight
 }
 
-async function send(text) {
-  if (!text?.trim() || loading.value) return
-  input.value = ''
-  messages.value.push({ role: 'user', content: text.trim() })
-  messages.value.push({ role: 'assistant', content: '' })
-  loading.value = true
-  scrollDown()
-
-  const history = messages.value
-    .slice(0, -1)
-    .map(m => ({ role: m.role, content: m.content }))
+async function stream(userContent) {
+  if (streaming.value) return
+  messages.value.push({ role: 'user', content: userContent })
+  const assistantMsg = { role: 'assistant', content: '', streaming: true }
+  messages.value.push(assistantMsg)
+  streaming.value = true
+  await scrollBottom()
 
   try {
+    const history = messages.value
+      .filter(m => !m.streaming)
+      .map(m => ({ role: m.role, content: m.content }))
+
     const res = await fetch('/api/guardian/chat', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history }),
+      body:    JSON.stringify({ messages: history }),
     })
     const reader = res.body.getReader()
-    const dec = new TextDecoder()
-    const last = messages.value[messages.value.length - 1]
+    const dec    = new TextDecoder()
 
     while (true) {
       const { done, value } = await reader.read()
       if (done) break
-      const lines = dec.decode(value).split('\n').filter(Boolean)
-      for (const line of lines) {
+      for (const line of dec.decode(value).split('\n').filter(Boolean)) {
         try {
           const j = JSON.parse(line)
-          if (j.message?.content) {
-            last.content += j.message.content
-            scrollDown()
-          }
-          if (j.done) break
+          if (j.message?.content) { assistantMsg.content += j.message.content; await scrollBottom() }
+          if (j.done) { assistantMsg.streaming = false; break }
         } catch {}
       }
     }
   } catch {
-    messages.value[messages.value.length - 1].content = '[Errore: Guardian non raggiungibile]'
+    assistantMsg.content = '[Errore: Guardian non raggiungibile — verifica che Ollama sia attivo]'
   }
 
-  loading.value = false
-  scrollDown()
+  assistantMsg.streaming = false
+  streaming.value = false
+  await scrollBottom()
   inputEl.value?.focus()
 }
 
-function clear() {
-  messages.value = []
+function send() {
+  const q = input.value.trim()
+  if (!q || streaming.value) return
+  input.value = ''
+  stream(q)
 }
 
-onMounted(() => inputEl.value?.focus())
+function clear() { messages.value = []; input.value = '' }
+
+async function askSystem() {
+  try {
+    const ov = await fetch('/api/overview').then(r => r.json())
+    stream(
+      `Analizza lo stato del sistema:\n` +
+      `CPU: ${ov.cpu_percent}%  RAM: ${ov.ram_percent}%  Disco: ${ov.disk_percent}%\n` +
+      `Risk score: ${ov.risk_score}/100 (${ov.risk_level})\n` +
+      `Processi totali: ${ov.process_count}  Sospetti: ${ov.suspicious_count}\n` +
+      `Connessioni sospette: ${ov.suspicious_connections}\n\nCome valuti la sicurezza?`
+    )
+  } catch { stream('Analizza lo stato generale della sicurezza del sistema.') }
+}
+
+async function askConnections() {
+  try {
+    const conns = await fetch('/api/connections').then(r => r.json())
+    const sus   = conns.filter(c => c.suspicion_score >= 20)
+    const list  = sus.slice(0, 5).map(c =>
+      `• ${c.remote_ip}:${c.remote_port} [${c.process}] score=${c.suspicion_score} flags=${c.flags.join(',') || 'nessuna'}`
+    ).join('\n')
+    stream(`Connessioni sospette (${sus.length} totali):\n${list || 'nessuna'}\n\nValuta il rischio.`)
+  } catch { stream('Controlla le connessioni di rete attive e valuta il rischio.') }
+}
+
+async function askTopProcess() {
+  try {
+    const procs = await fetch('/api/processes').then(r => r.json())
+    const top   = procs[0]
+    if (top) stream(
+      `Il processo più pesante è "${top.name}" (PID ${top.pid}):\n` +
+      `CPU: ${top.cpu}%  RAM: ${top.ram_mb} MB  Thread: ${top.threads}\n` +
+      `Score: ${top.suspicion_score}/100\n\nÈ normale?`
+    )
+  } catch {}
+}
+
+function askProcess(p) {
+  stream(
+    `Analizza il processo "${p.name}" (PID ${p.pid}):\n` +
+    `CPU: ${p.cpu}%  RAM: ${p.ram_mb} MB  Thread: ${p.threads}\n` +
+    `Utente: ${p.user}  Score: ${p.suspicion_score}/100 (${p.risk_level})\n\nDevo preoccuparmi?`
+  )
+}
+
+onMounted(() => {
+  load()
+  timer = setInterval(load, 10000)
+  nextTick(() => inputEl.value?.focus())
+})
+onUnmounted(() => clearInterval(timer))
 </script>
 
 <style scoped>
-.chat-window {
-  height: 420px;
-  overflow-y: auto;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
+.guardian-layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
   gap: 16px;
-  border-color: var(--cyan-dark);
-  box-shadow: 0 0 20px var(--cyan-glow);
+  height: calc(100vh - 110px);
 }
-
-.message { display: flex; flex-direction: column; gap: 4px; }
-.message.user .message-label { color: var(--cyan); }
-.message.assistant .message-label { color: var(--safe); }
-.message-label { font-size: 9px; letter-spacing: 2px; }
-.message.user .message-content { color: var(--text); }
-.message.assistant .message-content { color: var(--text-secondary); font-size: 12px; }
-
-.quick-btn {
-  font-size: 10px;
-  padding: 5px 10px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s;
-  letter-spacing: 0.5px;
+.terminal-panel { display:flex; flex-direction:column; overflow:hidden; padding:0; }
+.terminal-header {
+  display:flex; align-items:center; padding:10px 16px;
+  border-bottom:1px solid var(--cyan-dark); background:var(--surface); flex-shrink:0;
 }
-.quick-btn:hover:not(:disabled) { border-color: var(--cyan-dark); color: var(--cyan); }
-.quick-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
+.messages {
+  flex:1; overflow-y:auto; padding:16px;
+  display:flex; flex-direction:column; gap:10px; scroll-behavior:smooth;
+}
+.msg { display:flex; gap:4px; }
+.msg.user .msg-content      { color:var(--cyan); }
+.msg.assistant .msg-content { color:var(--text-secondary); line-height:1.7; white-space:pre-wrap; }
+.msg-prefix  { color:var(--cyan); font-size:13px; flex-shrink:0; }
+.msg-content { font-size:12px; }
 .input-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--surface);
-  border: 1px solid var(--cyan-dark);
-  padding: 8px 12px;
+  display:flex; align-items:center; padding:10px 16px;
+  border-top:1px solid var(--cyan-dark); background:var(--surface); flex-shrink:0; gap:8px;
 }
-
-.chat-input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text);
-  font-size: 13px;
-  caret-color: var(--cyan);
+.terminal-input { flex:1; background:transparent; border:none; outline:none; color:var(--cyan); font-size:13px; caret-color:var(--cyan); }
+.terminal-input::placeholder { color:var(--text-muted); }
+.sidebar { display:flex; flex-direction:column; overflow-y:auto; }
+.section-label { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-muted); letter-spacing:2px; }
+.proc-row {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:11px; padding:5px 8px; cursor:pointer;
+  border:1px solid transparent; transition:all 0.1s; gap:8px;
 }
-.chat-input::placeholder { color: var(--text-muted); }
-.chat-input:disabled { opacity: 0.5; }
-
-.cursor { animation: blink 1s step-end infinite; color: var(--cyan); }
-@keyframes blink { 50% { opacity: 0; } }
+.proc-row:hover { border-color:var(--cyan-dark); background:var(--cyan-glow); color:var(--cyan) !important; }
+.cursor { animation:blink 1s step-end infinite; }
+@keyframes blink { 50% { opacity:0; } }
+@media (max-width:900px) {
+  .guardian-layout { grid-template-columns:1fr; height:auto; }
+  .terminal-panel  { height:60vh; }
+}
 </style>
