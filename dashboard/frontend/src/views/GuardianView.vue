@@ -3,19 +3,21 @@
     <!-- Left: chat terminal -->
     <div class="terminal-panel card card-cyan">
       <div class="terminal-header">
+        <i class="fa-solid fa-robot" style="color:var(--cyan); font-size:13px"></i>
         <span class="font-orbitron" style="font-size:11px; color:var(--cyan); letter-spacing:3px">GUARDIAN AI</span>
-        <span class="font-mono" style="font-size:9px; color:var(--text-muted); margin-left:12px">gpt-oss:120b-cloud</span>
+        <span class="font-mono" style="font-size:9px; color:var(--text-muted); margin-left:8px">gpt-oss:120b-cloud</span>
         <span class="font-mono" :class="online ? 'risk-safe' : 'risk-critical'"
-          style="font-size:9px; letter-spacing:1px; margin-left:auto">
-          {{ online ? '● ONLINE' : '○ OFFLINE' }}
+          style="font-size:9px; letter-spacing:1px; margin-left:auto; display:flex; align-items:center; gap:5px">
+          <i :class="online ? 'fa-solid fa-circle' : 'fa-regular fa-circle'" style="font-size:7px"></i>
+          {{ online ? 'ONLINE' : 'OFFLINE' }}
         </span>
       </div>
 
       <div class="messages" ref="msgBox">
         <div v-if="!messages.length" class="font-mono" style="color:var(--text-muted); font-size:12px; line-height:2">
-          <div>> sistema di sicurezza CTOS attivo</div>
-          <div>> connessione a Guardian AI stabilita</div>
-          <div>> digita una domanda o seleziona un processo dalla lista</div>
+          <div><i class="fa-solid fa-shield-halved" style="margin-right:6px; color:var(--cyan)"></i>sistema di sicurezza CTOS attivo</div>
+          <div><i class="fa-solid fa-plug" style="margin-right:6px; color:var(--cyan)"></i>connessione a Guardian AI stabilita</div>
+          <div><i class="fa-solid fa-keyboard" style="margin-right:6px; color:var(--cyan)"></i>digita una domanda o seleziona un processo</div>
           <div style="margin-top:12px; color:var(--cyan)">_</div>
         </div>
 
@@ -37,25 +39,37 @@
           @keydown.enter="send"
           :disabled="streaming"
         />
-        <button class="btn" style="white-space:nowrap" @click="send" :disabled="streaming || !input.trim()">INVIA</button>
-        <button class="btn" style="border-color:var(--text-muted);color:var(--text-muted);margin-left:4px" @click="clear">CLR</button>
+        <button class="btn" style="white-space:nowrap" @click="send" :disabled="streaming || !input.trim()">
+          <i class="fa-solid fa-paper-plane" style="margin-right:5px"></i>INVIA
+        </button>
+        <button class="btn" style="border-color:var(--text-muted);color:var(--text-muted);margin-left:4px" @click="clear">
+          <i class="fa-solid fa-trash-can"></i>
+        </button>
       </div>
     </div>
 
     <!-- Right: quick actions -->
     <div class="sidebar">
       <div class="card" style="padding:14px; margin-bottom:12px">
-        <div class="section-label">ANALISI RAPIDA</div>
+        <div class="section-label"><i class="fa-solid fa-bolt" style="margin-right:5px"></i>ANALISI RAPIDA</div>
         <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px">
-          <button class="btn" style="font-size:10px; text-align:left" @click="askSystem">📊 Analizza il sistema</button>
-          <button class="btn" style="font-size:10px; text-align:left" @click="askConnections">🌐 Controlla connessioni</button>
-          <button class="btn" style="font-size:10px; text-align:left" @click="askTopProcess">⚡ Processo più pesante</button>
+          <button class="btn" style="font-size:10px; text-align:left; gap:8px; display:flex; align-items:center" @click="askSystem">
+            <i class="fa-solid fa-gauge-high"></i> Analizza il sistema
+          </button>
+          <button class="btn" style="font-size:10px; text-align:left; gap:8px; display:flex; align-items:center" @click="askConnections">
+            <i class="fa-solid fa-network-wired"></i> Controlla connessioni
+          </button>
+          <button class="btn" style="font-size:10px; text-align:left; gap:8px; display:flex; align-items:center" @click="askTopProcess">
+            <i class="fa-solid fa-fire"></i> Processo più pesante
+          </button>
         </div>
       </div>
 
-      <div class="card" style="padding:14px">
-        <div class="section-label">PROCESSI — clicca per analizzare</div>
-        <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px; max-height:400px; overflow-y:auto">
+      <div class="card" style="padding:14px; flex:1; overflow:hidden; display:flex; flex-direction:column">
+        <div class="section-label">
+          <i class="fa-solid fa-microchip" style="margin-right:5px"></i>PROCESSI — clicca per analizzare
+        </div>
+        <div style="margin-top:10px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; flex:1">
           <div
             v-for="p in topProcs" :key="p.pid"
             class="proc-row font-mono"
@@ -63,7 +77,7 @@
             @click="askProcess(p)"
           >
             <span style="color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1">{{ p.name }}</span>
-            <span style="font-size:10px; opacity:0.7">{{ p.cpu }}%</span>
+            <span style="font-size:10px; opacity:0.7; flex-shrink:0">{{ p.cpu }}%</span>
           </div>
         </div>
       </div>
@@ -208,10 +222,11 @@ onUnmounted(() => clearInterval(timer))
   grid-template-columns: 1fr 280px;
   gap: 16px;
   height: calc(100vh - 110px);
+  min-height: 500px;
 }
 .terminal-panel { display:flex; flex-direction:column; overflow:hidden; padding:0; }
 .terminal-header {
-  display:flex; align-items:center; padding:10px 16px;
+  display:flex; align-items:center; gap:8px; padding:10px 16px;
   border-bottom:1px solid var(--cyan-dark); background:var(--surface); flex-shrink:0;
 }
 .messages {
@@ -227,10 +242,10 @@ onUnmounted(() => clearInterval(timer))
   display:flex; align-items:center; padding:10px 16px;
   border-top:1px solid var(--cyan-dark); background:var(--surface); flex-shrink:0; gap:8px;
 }
-.terminal-input { flex:1; background:transparent; border:none; outline:none; color:var(--cyan); font-size:13px; caret-color:var(--cyan); }
+.terminal-input { flex:1; background:transparent; border:none; outline:none; color:var(--cyan); font-size:13px; caret-color:var(--cyan); min-width:0; }
 .terminal-input::placeholder { color:var(--text-muted); }
-.sidebar { display:flex; flex-direction:column; overflow-y:auto; }
-.section-label { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-muted); letter-spacing:2px; }
+.sidebar { display:flex; flex-direction:column; overflow:hidden; }
+.section-label { font-family:'Share Tech Mono',monospace; font-size:9px; color:var(--text-muted); letter-spacing:2px; display:flex; align-items:center; }
 .proc-row {
   display:flex; justify-content:space-between; align-items:center;
   font-size:11px; padding:5px 8px; cursor:pointer;
@@ -239,8 +254,13 @@ onUnmounted(() => clearInterval(timer))
 .proc-row:hover { border-color:var(--cyan-dark); background:var(--cyan-glow); color:var(--cyan) !important; }
 .cursor { animation:blink 1s step-end infinite; }
 @keyframes blink { 50% { opacity:0; } }
-@media (max-width:900px) {
-  .guardian-layout { grid-template-columns:1fr; height:auto; }
-  .terminal-panel  { height:60vh; }
+
+@media (max-width: 900px) {
+  .guardian-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .terminal-panel { height: 60vh; min-height: 400px; }
+  .sidebar { max-height: 60vh; overflow-y: auto; }
 }
 </style>

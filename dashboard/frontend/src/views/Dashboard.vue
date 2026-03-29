@@ -2,8 +2,11 @@
   <div>
     <!-- Header -->
     <div style="margin-bottom: 24px">
-      <h1 class="font-orbitron" style="font-size:18px; color:var(--cyan); letter-spacing:4px">RISK DASHBOARD</h1>
+      <h1 class="font-orbitron" style="font-size:18px; color:var(--cyan); letter-spacing:4px">
+        <i class="fa-solid fa-gauge-high" style="margin-right:10px"></i>RISK DASHBOARD
+      </h1>
       <p class="font-mono" style="font-size:10px; color:var(--text-muted); margin-top:4px">
+        <i class="fa-solid fa-rotate" style="font-size:8px"></i>
         MONITORAGGIO SISTEMA IN TEMPO REALE — aggiornamento ogni 5s
       </p>
     </div>
@@ -12,7 +15,9 @@
     <div class="stat-grid" v-if="overview">
       <!-- Risk score -->
       <div class="card card-cyan stat-card">
-        <div class="font-mono" style="font-size:9px; color:var(--text-muted); letter-spacing:2px">RISK SCORE</div>
+        <div class="font-mono stat-label">
+          <i class="fa-solid fa-shield-halved"></i> RISK SCORE
+        </div>
         <div class="font-orbitron" :class="`risk-${overview.risk_level}`" style="font-size:48px; font-weight:900; line-height:1.1; margin: 8px 0">
           {{ overview.risk_score }}
         </div>
@@ -26,7 +31,9 @@
 
       <!-- CPU -->
       <div class="card stat-card">
-        <div class="font-mono" style="font-size:9px; color:var(--text-muted); letter-spacing:2px">CPU</div>
+        <div class="font-mono stat-label">
+          <i class="fa-solid fa-cpu"></i> CPU
+        </div>
         <div class="font-orbitron" style="font-size:40px; color:var(--cyan); font-weight:700; margin: 8px 0">
           {{ overview.cpu_percent?.toFixed(0) }}<span style="font-size:16px">%</span>
         </div>
@@ -37,7 +44,9 @@
 
       <!-- RAM -->
       <div class="card stat-card">
-        <div class="font-mono" style="font-size:9px; color:var(--text-muted); letter-spacing:2px">RAM</div>
+        <div class="font-mono stat-label">
+          <i class="fa-solid fa-memory"></i> RAM
+        </div>
         <div class="font-orbitron" style="font-size:40px; color:var(--cyan-dim); font-weight:700; margin: 8px 0">
           {{ overview.ram_used_gb }}<span style="font-size:14px"> GB</span>
         </div>
@@ -51,21 +60,30 @@
 
       <!-- Processes -->
       <div class="card stat-card">
-        <div class="font-mono" style="font-size:9px; color:var(--text-muted); letter-spacing:2px">PROCESSI</div>
+        <div class="font-mono stat-label">
+          <i class="fa-solid fa-layer-group"></i> PROCESSI
+        </div>
         <div class="font-orbitron" style="font-size:40px; color:var(--text); font-weight:700; margin: 8px 0">
           {{ overview.process_count }}
         </div>
         <div class="font-mono" :class="overview.suspicious_count > 0 ? 'risk-high' : 'risk-safe'" style="font-size:10px; letter-spacing:1px">
+          <i :class="overview.suspicious_count > 0 ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-check'"></i>
           {{ overview.suspicious_count }} ad alto CPU
         </div>
       </div>
 
       <!-- Network -->
       <div class="card stat-card">
-        <div class="font-mono" style="font-size:9px; color:var(--text-muted); letter-spacing:2px">TRAFFICO</div>
+        <div class="font-mono stat-label">
+          <i class="fa-solid fa-arrow-right-arrow-left"></i> TRAFFICO
+        </div>
         <div style="margin: 10px 0">
-          <div class="font-mono" style="font-size:13px; color:var(--safe)">↑ {{ overview.bytes_sent_mb }} MB</div>
-          <div class="font-mono" style="font-size:13px; color:var(--cyan); margin-top:4px">↓ {{ overview.bytes_recv_mb }} MB</div>
+          <div class="font-mono" style="font-size:13px; color:var(--safe)">
+            <i class="fa-solid fa-arrow-up"></i> {{ overview.bytes_sent_mb }} MB
+          </div>
+          <div class="font-mono" style="font-size:13px; color:var(--cyan); margin-top:4px">
+            <i class="fa-solid fa-arrow-down"></i> {{ overview.bytes_recv_mb }} MB
+          </div>
         </div>
         <div class="font-mono" style="font-size:10px; color:var(--text-muted)">da avvio sistema</div>
       </div>
@@ -73,53 +91,60 @@
 
     <!-- Loading state -->
     <div v-else class="font-mono" style="color:var(--text-muted); padding:40px; text-align:center">
-      > connessione al backend in corso...
+      <i class="fa-solid fa-circle-notch fa-spin" style="margin-right:8px"></i>
+      connessione al backend in corso...
     </div>
 
     <!-- Top processes table -->
     <div v-if="topProcs.length" style="margin-top: 28px">
-      <div class="section-header">TOP PROCESSI PER CPU</div>
-      <div class="card" style="margin-top: 10px; padding:0; overflow:hidden">
-        <table>
-          <thead>
-            <tr>
-              <th>NOME</th>
-              <th>PID</th>
-              <th>CPU %</th>
-              <th>RAM MB</th>
-              <th>STATO</th>
-              <th>RISCHIO</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="p in topProcs" :key="p.pid">
-              <td style="color:var(--text)">{{ p.name }}</td>
-              <td>{{ p.pid }}</td>
-              <td :class="`risk-${p.cpu > 30 ? 'high' : p.cpu > 10 ? 'moderate' : 'safe'}`">{{ p.cpu }}%</td>
-              <td>{{ p.ram_mb }}</td>
-              <td style="color:var(--text-muted)">{{ p.status }}</td>
-              <td>
-                <span class="badge" :class="`bg-risk-${p.risk_level}`" :style="{ color: riskColor(p.risk_level) }">
-                  {{ p.risk_level.toUpperCase() }}
-                </span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="section-header">
+        <i class="fa-solid fa-list-ol" style="margin-right:6px"></i>TOP PROCESSI PER CPU
+      </div>
+      <div class="card table-wrap" style="margin-top: 10px; padding:0; overflow:hidden">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>NOME</th>
+                <th>PID</th>
+                <th><i class="fa-solid fa-cpu" style="margin-right:4px"></i>CPU %</th>
+                <th><i class="fa-solid fa-memory" style="margin-right:4px"></i>RAM MB</th>
+                <th>STATO</th>
+                <th>RISCHIO</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in topProcs" :key="p.pid">
+                <td style="color:var(--text)">{{ p.name }}</td>
+                <td>{{ p.pid }}</td>
+                <td :class="`risk-${p.cpu > 30 ? 'high' : p.cpu > 10 ? 'moderate' : 'safe'}`">{{ p.cpu }}%</td>
+                <td>{{ p.ram_mb }}</td>
+                <td style="color:var(--text-muted)">{{ p.status }}</td>
+                <td>
+                  <span class="badge" :class="`bg-risk-${p.risk_level}`" :style="{ color: riskColor(p.risk_level) }">
+                    {{ p.risk_level.toUpperCase() }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
     <!-- Suspicious connections -->
     <div v-if="suspConn.length" style="margin-top: 28px">
-      <div class="section-header" style="color:var(--critical)">⚠ CONNESSIONI SOSPETTE</div>
+      <div class="section-header" style="color:var(--critical)">
+        <i class="fa-solid fa-triangle-exclamation" style="margin-right:6px"></i>CONNESSIONI SOSPETTE
+      </div>
       <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px">
         <div v-for="c in suspConn" :key="c.remote_ip + c.remote_port" class="card" :class="`bg-risk-${c.risk_level}`" style="border:1px solid">
-          <div style="display:flex; justify-content:space-between; align-items:center">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px">
             <div>
               <span class="font-orbitron" style="font-size:13px; color:var(--text)">{{ c.remote_ip }}</span>
               <span class="font-mono" style="font-size:10px; color:var(--text-muted)">:{{ c.remote_port }}</span>
               <span v-if="c.process !== 'unknown'" class="font-mono" style="font-size:10px; color:var(--text-muted); margin-left:12px">
-                [{{ c.process }}]
+                <i class="fa-solid fa-terminal" style="font-size:9px"></i> {{ c.process }}
               </span>
             </div>
             <span class="font-orbitron" :class="`risk-${c.risk_level}`" style="font-size:20px; font-weight:900">
@@ -127,7 +152,9 @@
             </span>
           </div>
           <div v-if="c.flags.length" style="margin-top:6px">
-            <span v-for="f in c.flags" :key="f" class="badge bg-risk-critical" style="color:var(--critical); margin-right:6px">{{ f }}</span>
+            <span v-for="f in c.flags" :key="f" class="badge bg-risk-critical" style="color:var(--critical); margin-right:6px">
+              <i class="fa-solid fa-flag" style="margin-right:3px; font-size:8px"></i>{{ f }}
+            </span>
           </div>
         </div>
       </div>
@@ -166,13 +193,23 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <style scoped>
+.stat-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .stat-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(5, 1fr);
   gap: 12px;
 }
-@media (max-width: 1100px) { .stat-grid { grid-template-columns: 1fr 1fr 1fr; } }
-@media (max-width: 700px)  { .stat-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 1100px) { .stat-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px)  { .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 400px)  { .stat-grid { grid-template-columns: 1fr; } }
 
 .stat-card { padding: 20px; }
 
@@ -201,4 +238,6 @@ onUnmounted(() => clearInterval(timer))
   padding-left: 10px;
   border-left: 3px solid var(--cyan);
 }
+
+.table-scroll { overflow-x: auto; }
 </style>
