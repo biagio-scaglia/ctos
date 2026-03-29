@@ -7,7 +7,7 @@ echo.
 REM Start backend
 echo [1/2] Avvio backend FastAPI...
 cd /d "%~dp0backend"
-start "CTOS Backend" cmd /k "pip install -r requirements.txt -q && uvicorn main:app --reload --port 8000"
+start "CTOS Backend" cmd /k "pip install -r requirements.txt -q && python -m uvicorn main:app --reload --port 8000"
 
 timeout /t 3 /nobreak > nul
 
