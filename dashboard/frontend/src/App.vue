@@ -26,6 +26,10 @@
           <i class="fa-solid fa-robot nav-icon"></i>
           <span class="nav-label">GUARDIAN AI</span>
         </router-link>
+        <router-link to="/mahoraga" class="nav-link nav-link-mhg">
+          <i class="fa-solid fa-circle-half-stroke nav-icon"></i>
+          <span class="nav-label">MAHORAGA</span>
+        </router-link>
       </nav>
 
       <div class="topbar-right">
@@ -54,6 +58,9 @@
       </router-link>
       <router-link to="/guardian" class="mobile-link" @click="mobileOpen = false">
         <i class="fa-solid fa-robot"></i> GUARDIAN AI
+      </router-link>
+      <router-link to="/mahoraga" class="mobile-link mobile-link-mhg" @click="mobileOpen = false">
+        <i class="fa-solid fa-circle-half-stroke"></i> MAHORAGA
       </router-link>
     </nav>
 
@@ -229,6 +236,16 @@ onUnmounted(() => clearInterval(timer))
   flex-wrap: wrap;
 }
 .footer-sep { color: var(--border); margin: 0 2px; }
+
+/* Mahoraga special link */
+.nav-link-mhg { border-color: rgba(0,245,255,0.15) !important; }
+.nav-link-mhg:hover,
+.nav-link-mhg.router-link-active {
+  color: var(--cyan) !important;
+  border-color: var(--cyan) !important;
+  box-shadow: 0 0 12px rgba(0,245,255,0.3);
+}
+.mobile-link-mhg.router-link-active { color: var(--cyan); border-color: var(--cyan); }
 
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 900px) {
